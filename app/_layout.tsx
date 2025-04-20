@@ -57,6 +57,7 @@ export default function RootLayout() {
           options={{
             title: 'Starter Base',
             headerRight: () => <ThemeToggle />,
+            headerShown: false,
           }}
         />
       </Stack>
