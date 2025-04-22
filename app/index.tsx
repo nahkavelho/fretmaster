@@ -2,16 +2,20 @@ import * as React from 'react';
 import { View, Text } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import "../app.css";
+import Fretboard from "./components/Fretboard";
+import Button from "../components/ui/button";
 
 export const screenOptions = {
   headerShown: false,
 };
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const strings = [1, 2, 3, 4, 5, 6];
+const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
 
 export default function Screen() {
   const [progress, setProgress] = React.useState(78);
   const [isLandscape, setIsLandscape] = React.useState(false);
+  const [fretboardHeight, setFretboardHeight] = React.useState(200); // default 200px, can be adjusted
 
   React.useEffect(() => {
     async function checkOrientation() {
@@ -40,20 +44,26 @@ export default function Screen() {
     setProgress(Math.floor(Math.random() * 100));
   }
   return (
-    <View className='flex-1 justify-center items-center gap-2 p-6 bg-white'>
-      <View className='flex-1 justify-center items-center gap-2 bg-[#FFDDAB] w-full'>
-        <View className="flex-row w-full justify-between">
-          {frets.map((fret, i) => (
-            <View
-              key={fret}
-              className={["flex-1 items-center", i === 0 ? "-ml-1" : "", i === frets.length - 1 ? "-mr-1" : ""].join(" ")}
+    <View className="flex-1 justify-center items-center bg-white">
+      <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
+        {/* Fretboard with frets, strings, and dots */}
+        <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} />
+      </View>
+      <View className="h-[20%] justify-center items-center gap-2 p-6 bg-[#48A6A7] w-full">
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+          {NOTE_NAMES.map(note => (
+            <Button
+              key={note}
+              onPress={() => {
+                console.log("Selected note:", note);
+              }}
+              style={{ margin: 4 }}
             >
-              <View className="h-full w-2 bg-[#C0C0C0] shadow-lg shadow-black">{fret}</View>
-            </View>
+              <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>{note}</Text>
+            </Button>
           ))}
         </View>
       </View>
-      <View className='h-[20%] justify-center items-center gap-2 p-6 bg-[#48A6A7] w-full'></View>
     </View>
   );
 }
