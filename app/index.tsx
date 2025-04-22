@@ -41,7 +41,7 @@ export default function Screen() {
   }, []);
 
   function updateProgressValue() {
-    setProgress(Math.floor(Math.random() * 100));
+
   }
   return (
     <View className="flex-1 justify-center items-center bg-white">
