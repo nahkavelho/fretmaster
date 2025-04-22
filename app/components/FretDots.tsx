@@ -20,7 +20,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
       {frets.map((fret, i) => {
         if (!dotFrets.includes(fret) && !doubleDotFrets.includes(fret)) return null;
         // To adjust horizontal position, edit the 'left' calculation below
-        const left = ((i + 0.4) / frets.length) * 100; // Horizontal position as % of fretboard width
+        const left = ((i + 0.3) / frets.length) * 100; // Horizontal position as % of fretboard width
 
         if (doubleDotFrets.includes(fret)) {
           // Double dots (12): stack two dots vertically
