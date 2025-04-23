@@ -12,7 +12,23 @@ interface FretboardProps {
   
 }
 
+function GenerateList() {
+  const noteStepx = 34.5;
+  const noteStepy = 36;
+  const numberOfPositions = 72;
+  const oneStringPositions = 12;
+  const FirstNoteX = 10;
+  const FirstNoteY = 0;
 
+  const listOfPositions = Array.from({ length: numberOfPositions }, (_, index) => index);
+  const dotCoordinates = listOfPositions.map((position) => {
+    const x = FirstNoteX + (position % oneStringPositions) * noteStepx;
+    const y = FirstNoteY + Math.floor(position / oneStringPositions) * noteStepy;
+    return [x, y];
+  });
+  const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
+  return dotCoordinates[randomIndex];
+}
 
 const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight }) => {
   return (
@@ -24,44 +40,24 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight }
       {/* Frets (vertical lines) */}
       <Frets frets={frets} />
       {/* Random note dots */}
-      <RandomNodeDot />
+      <DrawNote />
     </View>
   );
 };
-const RandomNodeDot = () => {
-  const noteStepx = 34.5;
-  const noteStepy = 36;
-  const numberOfPositions = 72;
-  const oneStringPositions = 12;
-  const FirstNoteX = 10;
-  const FirstNoteY = 0;
-
-  const listOfPositions = Array.from({ length: numberOfPositions }, (_, index) => index);
-  const dotCordinates = listOfPositions.map((position) => {
-    const x = FirstNoteX + (position % oneStringPositions) * noteStepx;
-    const y = FirstNoteY + Math.floor(position / oneStringPositions) * noteStepy;
-    return [x, y];
-
-
-  });
-  
+const DrawNote = () => {
+  const [x, y] = GenerateList();
   return (
-    <>
-      {dotCordinates.map((dot, i) => (
-        <View
-          key={i}
-          style={{
-            position: 'absolute',
-            left: dot[0],
-            top: dot[1],
-            width: 20,
-            height: 20,
-            borderRadius: 5,
-            backgroundColor: 'green',
-          }}
-        />
-      ))}
-    </>
+    <View
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width: 20,
+        height: 20,
+        borderRadius: 5,
+        backgroundColor: 'green',
+      }}
+    />
   );
 };
 
