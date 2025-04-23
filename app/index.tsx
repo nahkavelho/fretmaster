@@ -4,6 +4,8 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import "../app.css";
 import Fretboard from "./components/Fretboard";
 import Button from "../components/ui/button";
+import Menu from "./components/Menu";
+import Campaign from "./components/Campaign";
 
 export const screenOptions = {
   headerShown: false,
@@ -12,10 +14,15 @@ const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const strings = [1, 2, 3, 4, 5, 6];
 const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
 
+// Force light mode for the app
+const forcedColorScheme = 'light';
+
 export default function Screen() {
   const [progress, setProgress] = React.useState(78);
   const [isLandscape, setIsLandscape] = React.useState(false);
   const [fretboardHeight, setFretboardHeight] = React.useState(200); // default 200px, can be adjusted
+  const [showMenu, setShowMenu] = React.useState(true);
+  const [showCampaign, setShowCampaign] = React.useState(false);
 
   React.useEffect(() => {
     async function checkOrientation() {
@@ -43,6 +50,22 @@ export default function Screen() {
   function updateProgressValue() {
     setProgress(Math.floor(Math.random() * 100));
   }
+  if (showMenu) {
+    return (
+      <Menu
+        onCampaign={() => { setShowCampaign(true); setShowMenu(false); }}
+        onFreeMode={() => setShowMenu(false)}
+        onSettings={() => { /* TODO: Implement settings screen */ }}
+      />
+    );
+  }
+
+  if (showCampaign) {
+    return (
+      <Campaign onBack={() => { setShowCampaign(false); setShowMenu(true); }} />
+    );
+  }
+
   return (
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
