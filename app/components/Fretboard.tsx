@@ -8,28 +8,14 @@ interface FretboardProps {
   frets: number[]
   strings: number[]
   fretboardHeight: number
-  
+  noteDot: [x: number, y: number, note: string]
 }
 
-function GenerateList() {
-  const noteStepx = 29
-  const noteStepy = 36
-  const numberOfPositions = 72
-  const oneStringPositions = 12
-  const FirstNoteX = 10
-  const FirstNoteY = 0
-
-  const listOfPositions = Array.from({ length: numberOfPositions }, (_, index) => index)
-  const dotCoordinates = listOfPositions.map((position) => {
-    const x = ((FirstNoteX + (position % oneStringPositions) * noteStepx) / 100) * noteStepx
-    const y = FirstNoteY + Math.floor(position / oneStringPositions) * noteStepy
-    return [x, y];
-  });
-  const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
-  return dotCoordinates[randomIndex];
+interface DrawNoteDotProps {
+  noteDot: [x: number, y: number, note: string]
 }
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight }) => {
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot }) => {
   return (
     <View style={{ position: 'relative', width: '100%', height: fretboardHeight }}>
       {/* Strings (horizontal lines) */}
@@ -39,24 +25,24 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight }
       {/* Frets (vertical lines) */}
       <Frets frets={frets} />
       {/* Random note dots */}
-      <DrawNoteDot />
+      <DrawNoteDot noteDot={noteDot} />
     </View>
   );
 };
-const DrawNoteDot = () => {
-  const [x, y] = GenerateList();
+const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
   return (
     <View
       style={{
         position: 'absolute',
-        left: `${x}%`,
-        top: y,
+        left: `${noteDot[0]}%`,
+        top: noteDot[1],
         width: 20,
         height: 20,
-        borderRadius: 5,
+        borderRadius: 10,
         backgroundColor: 'green',
       }}
-    />
+    >
+    </View>
   );
 };
 
