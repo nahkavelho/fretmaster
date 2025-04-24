@@ -48,7 +48,7 @@ export default function Screen() {
   }, []);
 
   function updateProgressValue() {
-    setProgress(Math.floor(Math.random() * 100));
+
   }
   if (showMenu) {
     return (
