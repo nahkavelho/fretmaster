@@ -25,6 +25,13 @@ export default function Screen() {
   const [showMenu, setShowMenu] = React.useState(true)
   const [showCampaign, setShowCampaign] = React.useState(false)
   const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
+  const [resultMessage, setResultMessage] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (resultMessage) {
+      const timeout = setTimeout(() => setResultMessage(null), 1000); // clear after 2s
+      return () => clearTimeout(timeout);
+    }
+  }, [resultMessage]);
 
   React.useEffect(() => {
     async function checkOrientation() {
@@ -75,17 +82,18 @@ export default function Screen() {
         <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
       </View>
       <View className="h-[20%] justify-center items-center gap-2 p-6 bg-[#48A6A7] w-full">
+        {resultMessage && <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>{resultMessage}</Text>}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
           {NOTE_NAMES.map(note => (
             <Button
               key={note}
               onPress={() => {
                 if (noteDot[2] === note) {
-                  console.log("Correct note!")
                   setNoteDot(GenDotList())
+                  setResultMessage("✅ Correct!");   
                 }
                 else {
-                  console.log("Wrong note! try again")
+                  setResultMessage("❌ Incorrect!"); 
                 }
               }}
               style={{ margin: 4 }}
