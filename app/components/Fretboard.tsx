@@ -46,4 +46,4 @@ const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
   );
 };
 
-export default Fretboard;
+export default Fretboard

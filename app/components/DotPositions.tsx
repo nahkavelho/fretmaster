@@ -1,3 +1,6 @@
+
+type NoteDot = [number, number, string];
+
 function GenDotList() {
   const noteStepx = 29
   const noteStepy = 36
@@ -28,7 +31,9 @@ function GenDotList() {
     const note = guitarNotes[Math.floor(position / oneStringPositions)][position % oneStringPositions]
     return [x, y, note]
   })
-  const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
-  return dotCoordinates[randomIndex]
+  const randomIndex = Math.floor(Math.random() * dotCoordinates.length)
+  return dotCoordinates[randomIndex] as NoteDot
 }
 export default GenDotList
+
+export type { NoteDot }

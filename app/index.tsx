@@ -1,12 +1,13 @@
-import * as React from 'react';
-import { View, Text } from 'react-native';
-import * as ScreenOrientation from 'expo-screen-orientation';
+import * as React from 'react'
+import { View, Text } from 'react-native'
+import * as ScreenOrientation from 'expo-screen-orientation'
 import "../app.css";
-import Fretboard from "./components/Fretboard";
-import Button from "../components/ui/button";
-import Menu from "./components/Menu";
-import Campaign from "./components/Campaign";
-import GenDotList from "./components/DotPositions";
+import Fretboard from "./components/Fretboard"
+import Button from "../components/ui/button"
+import Menu from "./components/Menu"
+import Campaign from "./components/Campaign"
+import GenDotList from "./components/DotPositions"
+import { NoteDot } from "./components/DotPositions"
 
 export const screenOptions = {
   headerShown: false,
@@ -14,22 +15,21 @@ export const screenOptions = {
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const strings = [1, 2, 3, 4, 5, 6];
 const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
-
 // Force light mode for the app
 const forcedColorScheme = 'light'
 
 export default function Screen() {
-  const [progress, setProgress] = React.useState(78);
-  const [isLandscape, setIsLandscape] = React.useState(false);
-  const [fretboardHeight, setFretboardHeight] = React.useState(200); // default 200px, can be adjusted
-  const [showMenu, setShowMenu] = React.useState(true);
-  const [showCampaign, setShowCampaign] = React.useState(false);
-  const [noteDot, setNoteDot] = React.useState(GenDotList());
+  const [progress, setProgress] = React.useState(78)
+  const [isLandscape, setIsLandscape] = React.useState(false)
+  const [fretboardHeight, setFretboardHeight] = React.useState(200) // default 200px, can be adjusted
+  const [showMenu, setShowMenu] = React.useState(true)
+  const [showCampaign, setShowCampaign] = React.useState(false)
+  const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
 
   React.useEffect(() => {
     async function checkOrientation() {
       const orientation = await ScreenOrientation.getOrientationAsync()
-      console.log('Initial orientation:', orientation);
+      console.log('Initial orientation:', orientation)
       setIsLandscape(
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
@@ -37,15 +37,15 @@ export default function Screen() {
     }
     checkOrientation();
     const subscription = ScreenOrientation.addOrientationChangeListener(event => {
-      const orientation = event.orientationInfo.orientation;
-      console.log('Orientation changed:', orientation);
+      const orientation = event.orientationInfo.orientation
+      console.log('Orientation changed:', orientation)
       setIsLandscape(
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
       );
     });
     return () => {
-      ScreenOrientation.removeOrientationChangeListener(subscription);
+      ScreenOrientation.removeOrientationChangeListener(subscription)
     };
   }, []);
 
@@ -64,7 +64,7 @@ export default function Screen() {
 
   if (showCampaign) {
     return (
-      <Campaign onBack={() => { setShowCampaign(false); setShowMenu(true); }} />
+      <Campaign onBack={() => { setShowCampaign(false); setShowMenu(true) }} />
     );
   }
 
@@ -81,11 +81,11 @@ export default function Screen() {
               key={note}
               onPress={() => {
                 if (noteDot[2] === note) {
-                  console.log("Correct note!");
-                  setNoteDot(GenDotList());
+                  console.log("Correct note!")
+                  setNoteDot(GenDotList())
                 }
                 else {
-                  console.log("Wrong note! try again");
+                  console.log("Wrong note! try again")
                 }
               }}
               style={{ margin: 4 }}
