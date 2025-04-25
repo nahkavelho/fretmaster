@@ -78,6 +78,9 @@ export default function Screen() {
   return (
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
+        <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8, marginBottom: 100 }}>
+          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold" }}>Menu</Text>
+        </Button>
         {/* Fretboard with frets, strings, and dots */}
         <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
       </View>
