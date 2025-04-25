@@ -14,7 +14,6 @@ export const screenOptions = {
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const strings = [1, 2, 3, 4, 5, 6];
 const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
-const noteDot = GenDotList()
 
 // Force light mode for the app
 const forcedColorScheme = 'light'
@@ -25,6 +24,7 @@ export default function Screen() {
   const [fretboardHeight, setFretboardHeight] = React.useState(200); // default 200px, can be adjusted
   const [showMenu, setShowMenu] = React.useState(true);
   const [showCampaign, setShowCampaign] = React.useState(false);
+  const [noteDot, setNoteDot] = React.useState(GenDotList());
 
   React.useEffect(() => {
     async function checkOrientation() {
@@ -80,7 +80,13 @@ export default function Screen() {
             <Button
               key={note}
               onPress={() => {
-                console.log("Selected note:", note);
+                if (noteDot[2] === note) {
+                  console.log("Correct note!");
+                  setNoteDot(GenDotList());
+                }
+                else {
+                  console.log("Wrong note! try again");
+                }
               }}
               style={{ margin: 4 }}
             >
