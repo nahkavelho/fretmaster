@@ -9,6 +9,9 @@ import Campaign from "./components/Campaign"
 import GenDotList from "./components/DotPositions"
 import { NoteDot } from "./components/DotPositions"
 
+interface ScoreProp {
+  score: number
+}
 export const screenOptions = {
   headerShown: false,
 };
@@ -26,6 +29,7 @@ export default function Screen() {
   const [showCampaign, setShowCampaign] = React.useState(false)
   const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
+  const [score, setScore] = React.useState(0)
   React.useEffect(() => {
     if (resultMessage) {
       const timeout = setTimeout(() => setResultMessage(null), 1000); // clear after 2s
@@ -78,9 +82,10 @@ export default function Screen() {
   return (
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
-        <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8, marginBottom: 100 }}>
+      <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8, marginBottom: 100 }}>
           <Text style={{ color: "black", fontSize: 15, fontWeight: "bold" }}>Menu</Text>
         </Button>
+        <ScoreBoard score={score} />
         {/* Fretboard with frets, strings, and dots */}
         <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
       </View>
@@ -94,6 +99,7 @@ export default function Screen() {
                 if (noteDot[2] === note) {
                   setNoteDot(GenDotList())
                   setResultMessage("✅ Correct!");   
+                  setScore(1+score)
                 }
                 else {
                   setResultMessage("❌ Incorrect!"); 
@@ -108,4 +114,25 @@ export default function Screen() {
       </View>
     </View>
   );
+}
+
+const ScoreBoard: React.FC<ScoreProp> = ({ score }) => {
+  return (
+    <View style={{ 
+      padding: 10, 
+      backgroundColor: '#fff', 
+      borderRadius: 12, 
+      marginTop: 20,
+      marginBottom: 100,
+      alignItems: 'center',
+    }}>
+      <Text style={{ 
+        fontSize: 24, 
+        fontWeight: 'bold', 
+        color: '#333' 
+      }}>
+        🎯 Score: {score} / 30
+      </Text>
+    </View>
+  )
 }

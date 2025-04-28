@@ -15,7 +15,7 @@ interface DrawNoteDotProps {
   noteDot: [x: number, y: number, note: string]
 }
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot }) => {
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot}) => {
   return (
     <View style={{ position: 'relative', width: '100%', height: fretboardHeight }}>
       {/* Strings (horizontal lines) */}
@@ -29,6 +29,7 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, 
     </View>
   );
 };
+
 const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
   return (
     <View
