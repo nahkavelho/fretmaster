@@ -10,18 +10,18 @@ function GenDotList() {
   const FirstNoteY = 0
   type Note = string
   const guitarNotes: Note[][] = [
-    // 6th string (Low E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-    // 5th string (A)
-    ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
-    // 4th string (D)
-    ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
-    // 3rd string (G)
-    ["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
-    // 2nd string (B)
-    ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
     // 1st string (High E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
+    ["F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
+    // 2nd string (B)
+    ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+    // 3rd string (G)
+    ["G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
+    // 4th string (D)
+    ["D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
+    // 5th string (A)
+    ["A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
+    // 6th string (Low E)
+    ["F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
   ]
 
   const listOfPositions = Array.from({ length: numberOfPositions }, (_, index) => index)
