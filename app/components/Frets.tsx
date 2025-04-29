@@ -18,10 +18,11 @@ const Frets: React.FC<FretsProps> = ({ frets }) => (
             width: 8,
             alignSelf: 'stretch',
             backgroundColor: '#C0C0C0',
-            shadowColor: '#000',
+            shadowColor: '#543310', // deep brown shadow
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
+            shadowOpacity: 0.4,
             shadowRadius: 4,
+            elevation: 3,
           }}
         >
           {/* {fret} */}
