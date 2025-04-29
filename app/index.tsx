@@ -144,6 +144,15 @@ export default function Screen() {
         <Button style={styles.menuButton} onPress={() => setShowMenu(true)}>
           <Text style={styles.menuButtonText}>Menu</Text>
         </Button>
+        <Button style={styles.menuButton} onPress={() => {
+          setNoteDot(GenDotList())
+          setResultMessage(null)
+          setScore(0)
+          setNumberOfPositions(5)
+        }}
+        >
+          <Text style={styles.menuButtonText}>Reset</Text>
+        </Button>
       </View>
         <ScoreBoard score={score} numberOfPositions={numberOfPositions} />
         {/* Fretboard with frets, strings, and dots */}
