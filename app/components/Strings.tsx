@@ -23,7 +23,12 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
               right: 0,
               top,
               height: 2,
-              backgroundColor: 'black',
+              backgroundColor: '#C0C0C0', // silver string
+              shadowColor: '#543310', // deep brown shadow
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.4,
+              shadowRadius: 2,
+              elevation: 2,
             }}
           />
         );
