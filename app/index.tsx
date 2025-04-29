@@ -11,6 +11,7 @@ import { NoteDot } from "./components/DotPositions"
 
 interface ScoreProp {
   score: number
+  numberOfPositions: number
 }
 export const screenOptions = {
   headerShown: false,
@@ -30,6 +31,8 @@ export default function Screen() {
   const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0)
+  const [numberOfPositions, setNumberOfPositions] = React.useState(5)
+
   React.useEffect(() => {
     if (resultMessage) {
       const timeout = setTimeout(() => setResultMessage(null), 1000); // clear after 2s
@@ -82,27 +85,46 @@ export default function Screen() {
   return (
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
-      <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8, marginBottom: 100 }}>
-          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold" }}>Menu</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>  
+      <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8}}>
+          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold", marginLeft: 8 }}>Menu</Text>
         </Button>
-        <ScoreBoard score={score} />
+        <Button onPress={() => {
+          setNoteDot(GenDotList())
+          setScore(0)
+          setNumberOfPositions(5)
+        }}
+        style={{ backgroundColor: '#48A6A7', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8}}>
+          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold" }}>Reset</Text>
+        </Button>
+      </View>
+        <ScoreBoard score={score} numberOfPositions={numberOfPositions} />
         {/* Fretboard with frets, strings, and dots */}
         <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
       </View>
       <View className="h-[20%] justify-center items-center gap-2 p-6 bg-[#48A6A7] w-full">
         {resultMessage && <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>{resultMessage}</Text>}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+          <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>guess left {numberOfPositions}: </Text>
           {NOTE_NAMES.map(note => (
             <Button
               key={note}
               onPress={() => {
-                if (noteDot[2] === note) {
+                if (numberOfPositions === 0) {
+                  setResultMessage("No more notes to guess, final score: 0 /" + score)
+                  return
+                }
+
+                if (noteDot.includes(note)) {
+                  setResultMessage("✅ Correct!");
                   setNoteDot(GenDotList())
-                  setResultMessage("✅ Correct!");   
-                  setScore(1+score)
+                  setScore(score+1)
+                  setNumberOfPositions(numberOfPositions-1)
                 }
                 else {
                   setResultMessage("❌ Incorrect!"); 
+                  setNoteDot(GenDotList())
+                  setNumberOfPositions(numberOfPositions-1)
                 }
               }}
               style={{ margin: 4 }}
@@ -116,22 +138,28 @@ export default function Screen() {
   );
 }
 
-const ScoreBoard: React.FC<ScoreProp> = ({ score }) => {
+const ScoreBoard: React.FC<ScoreProp> = ({ score, numberOfPositions }) => {
+  const isFinal = numberOfPositions === 0;
+
   return (
-    <View style={{ 
-      padding: 10, 
-      backgroundColor: '#fff', 
-      borderRadius: 12, 
-      marginTop: 20,
-      marginBottom: 100,
-      alignItems: 'center',
-    }}>
-      <Text style={{ 
-        fontSize: 24, 
-        fontWeight: 'bold', 
-        color: '#333' 
-      }}>
-        🎯 Score: {score} / 30
+    <View
+      style={{
+        padding: 10,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        marginTop: 20,
+        marginBottom: 100,
+        alignItems: 'center',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: '#333',
+        }}
+      >
+        {isFinal ? `Final Score: ${score}` : `Score: ${score} / 30`}
       </Text>
     </View>
   )
