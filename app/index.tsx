@@ -90,7 +90,7 @@ export default function Screen() {
   const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0)
-  const [numberOfPositions, setNumberOfPositions] = React.useState(5)
+  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
 
   React.useEffect(() => {
     if (resultMessage) {
