@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 48,
     alignSelf: 'center',
+    marginLeft: 50,
+    marginRight: 50,
   },
   menuButtonText: {
     color: '#543310',
