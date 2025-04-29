@@ -19,7 +19,7 @@ interface DrawNoteDotProps {
 const BROWN_BG = '#74512D'; // mid brown, matches Free Mode/menu/fret dots
 const BORDER = '#AF8F6F'; // tan border
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot }) => {
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot}) => {
   return (
     <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: BROWN_BG, borderRadius: 16, borderWidth: 4, borderColor: BORDER, overflow: 'hidden' }}>
       {/* Strings (horizontal lines) */}
@@ -33,6 +33,7 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, 
     </View>
   );
 };
+
 const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
   return (
     <View

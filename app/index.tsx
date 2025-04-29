@@ -9,6 +9,10 @@ import Campaign from "./components/Campaign"
 import GenDotList from "./components/DotPositions"
 import { NoteDot } from "./components/DotPositions"
 
+interface ScoreProp {
+  score: number
+  numberOfPositions: number
+}
 export const screenOptions = {
   headerShown: false,
 };
@@ -39,6 +43,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 48,
     alignSelf: 'center',
+    marginLeft: 50,
+    marginRight: 50,
   },
   menuButtonText: {
     color: '#543310',
@@ -83,6 +89,9 @@ export default function Screen() {
   const [showCampaign, setShowCampaign] = React.useState(false)
   const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
+  const [score, setScore] = React.useState(0)
+  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
+
   React.useEffect(() => {
     if (resultMessage) {
       const timeout = setTimeout(() => setResultMessage(null), 1000); // clear after 2s
@@ -133,25 +142,47 @@ export default function Screen() {
   return (
     <View style={styles.root}>
       <View style={styles.fretboardContainer}>
-        <Button onPress={() => setShowMenu(true)} style={styles.menuButton}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>  
+        <Button style={styles.menuButton} onPress={() => setShowMenu(true)}>
           <Text style={styles.menuButtonText}>Menu</Text>
         </Button>
+        <Button style={styles.menuButton} onPress={() => {
+          setNoteDot(GenDotList())
+          setResultMessage(null)
+          setScore(0)
+          setNumberOfPositions(5)
+        }}
+        >
+          <Text style={styles.menuButtonText}>Reset</Text>
+        </Button>
+      </View>
+        <ScoreBoard score={score} numberOfPositions={numberOfPositions} />
         {/* Fretboard with frets, strings, and dots */}
         <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
       </View>
       <View style={styles.answerBar}>
         {resultMessage && <Text style={styles.resultText}>{resultMessage}</Text>}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
+          <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>guess left {numberOfPositions}: </Text>
           {NOTE_NAMES.map(note => (
             <Button
               key={note}
               onPress={() => {
-                if (noteDot[2] === note) {
+                if (numberOfPositions === 0) {
+                  setResultMessage("No more notes to guess, final score: 0 /" + score)
+                  return
+                }
+
+                if (noteDot.includes(note)) {
+                  setResultMessage("✅ Correct!");
                   setNoteDot(GenDotList())
-                  setResultMessage("✅ Correct!");   
+                  setScore(score+1)
+                  setNumberOfPositions(numberOfPositions-1)
                 }
                 else {
                   setResultMessage("❌ Incorrect!"); 
+                  setNoteDot(GenDotList())
+                  setNumberOfPositions(numberOfPositions-1)
                 }
               }}
               style={styles.noteButton}
@@ -163,4 +194,31 @@ export default function Screen() {
       </View>
     </View>
   );
+}
+
+const ScoreBoard: React.FC<ScoreProp> = ({ score, numberOfPositions }) => {
+  const isFinal = numberOfPositions === 0;
+
+  return (
+    <View
+      style={{
+        padding: 10,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        marginTop: 20,
+        marginBottom: 100,
+        alignItems: 'center',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: '#333',
+        }}
+      >
+        {isFinal ? `Final Score: ${score}` : `Score: ${score} / 30`}
+      </Text>
+    </View>
+  )
 }
