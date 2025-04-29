@@ -138,19 +138,11 @@ export default function Screen() {
   }
 
   return (
-    <View className="flex-1 justify-center items-center bg-white">
-      <View className="flex-1 w-full bg-[#FFDDAB] justify-center items-center">
+    <View style={styles.root}>
+      <View style={styles.fretboardContainer}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>  
-      <Button onPress={() => setShowMenu(true)} style={{ backgroundColor: '#FFD700', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8}}>
-          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold", marginLeft: 8 }}>Menu</Text>
-        </Button>
-        <Button onPress={() => {
-          setNoteDot(GenDotList())
-          setScore(0)
-          setNumberOfPositions(5)
-        }}
-        style={{ backgroundColor: '#48A6A7', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 8}}>
-          <Text style={{ color: "black", fontSize: 15, fontWeight: "bold" }}>Reset</Text>
+        <Button style={styles.menuButton} onPress={() => setShowMenu(true)}>
+          <Text style={styles.menuButtonText}>Menu</Text>
         </Button>
       </View>
         <ScoreBoard score={score} numberOfPositions={numberOfPositions} />
