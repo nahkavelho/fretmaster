@@ -8,6 +8,9 @@ import Menu from "./components/Menu"
 import Campaign from "./components/Campaign"
 import GenDotList from "./components/DotPositions"
 import { NoteDot } from "./components/DotPositions"
+import LoginScreen from '../LoginScreen';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 
 interface ScoreProp {
   score: number
@@ -82,143 +85,138 @@ const styles = StyleSheet.create({
 });
 
 export default function Screen() {
-  const [progress, setProgress] = React.useState(78)
-  const [isLandscape, setIsLandscape] = React.useState(false)
-  const [fretboardHeight, setFretboardHeight] = React.useState(200) // default 200px, can be adjusted
-  const [showMenu, setShowMenu] = React.useState(true)
-  const [showCampaign, setShowCampaign] = React.useState(false)
-  const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList())
+  const [loggedIn, setLoggedIn] = React.useState(false);
+  const [authChecked, setAuthChecked] = React.useState(false);
+  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free'>('menu');
+
+  // Free mode state (always defined, only used when in free mode)
+  const [fretboardHeight, setFretboardHeight] = React.useState(140);
+  const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList());
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
-  const [score, setScore] = React.useState(0)
-  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
+  const [score, setScore] = React.useState(0);
+  const [numberOfPositions, setNumberOfPositions] = React.useState(30);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setLoggedIn(!!user);
+      setAuthChecked(true);
+    });
+    return unsubscribe;
+  }, []);
 
   React.useEffect(() => {
     if (resultMessage) {
-      const timeout = setTimeout(() => setResultMessage(null), 1000); // clear after 2s
+      const timeout = setTimeout(() => setResultMessage(null), 1000);
       return () => clearTimeout(timeout);
     }
   }, [resultMessage]);
 
-  React.useEffect(() => {
-    async function checkOrientation() {
-      const orientation = await ScreenOrientation.getOrientationAsync()
-      setIsLandscape(
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
-    }
-    checkOrientation();
-    const subscription = ScreenOrientation.addOrientationChangeListener(event => {
-      const orientation = event.orientationInfo.orientation
-      setIsLandscape(
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
-    });
-    return () => {
-      ScreenOrientation.removeOrientationChangeListener(subscription)
-    };
-  }, []);
-
-  function updateProgressValue() {
-
+  if (!authChecked) {
+    // Optionally show a loading spinner here
+    return null;
   }
-  if (showMenu) {
+
+  if (!loggedIn) {
+    return <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />;
+  }
+
+  if (screen === 'campaign') {
+    return <Campaign onBack={() => setScreen('menu')} />;
+  }
+
+  if (screen === 'free') {
     return (
-      <Menu
-        onCampaign={() => { setShowCampaign(true); setShowMenu(false) }}
-        onFreeMode={() => setShowMenu(false)}
-        onSettings={() => { /* TODO: Implement settings screen */ }}
-      />
-    );
-  }
-
-  if (showCampaign) {
-    return (
-      <Campaign onBack={() => { setShowCampaign(false); setShowMenu(true) }} />
-    );
-  }
-
-  return (
-    <View style={styles.root}>
-      <View style={styles.fretboardContainer}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>  
-        <Button style={styles.menuButton} onPress={() => setShowMenu(true)}>
-          <Text style={styles.menuButtonText}>Menu</Text>
-        </Button>
-        <Button style={styles.menuButton} onPress={() => {
-          setNoteDot(GenDotList())
-          setResultMessage(null)
-          setScore(0)
-          setNumberOfPositions(5)
-        }}
-        >
-          <Text style={styles.menuButtonText}>Reset</Text>
-        </Button>
-      </View>
-        <ScoreBoard score={score} numberOfPositions={numberOfPositions} />
-        {/* Fretboard with frets, strings, and dots */}
-        <Fretboard frets={frets} strings={strings} fretboardHeight={fretboardHeight} noteDot={noteDot} />
-      </View>
-      <View style={styles.answerBar}>
-        {resultMessage && <Text style={styles.resultText}>{resultMessage}</Text>}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
-          <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>guess left {numberOfPositions}: </Text>
-          {NOTE_NAMES.map(note => (
-            <Button
-              key={note}
-              onPress={() => {
-                if (numberOfPositions === 0) {
-                  setResultMessage("No more notes to guess, final score: 0 /" + score)
-                  return
-                }
-
-                if (noteDot.includes(note)) {
-                  setResultMessage("✅ Correct!");
-                  setNoteDot(GenDotList())
-                  setScore(score+1)
-                  setNumberOfPositions(numberOfPositions-1)
-                }
-                else {
-                  setResultMessage("❌ Incorrect!"); 
-                  setNoteDot(GenDotList())
-                  setNumberOfPositions(numberOfPositions-1)
-                }
-              }}
-              style={styles.noteButton}
-            >
-              <Text style={styles.noteButtonText}>{note}</Text>
+      <View style={styles.root}>
+        <View style={styles.fretboardContainer}>
+          {/* Floating Menu/Reset Buttons - Top Left */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
+            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => setScreen('menu')}>
+              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Menu"}</Text>
             </Button>
-          ))}
+            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
+              setNoteDot(GenDotList());
+              setResultMessage(null);
+              setScore(0);
+              setNumberOfPositions(5);
+            }}>
+              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
+            </Button>
+          </View>
+          {/* Floating Scoreboard - Top Right */}
+          <View style={{ alignItems: 'flex-end', marginTop: 0, marginBottom: 8, zIndex: 10, backgroundColor: '#fff', borderRadius: 12, padding: 10, minWidth: 150, position: 'absolute', right: 8, top: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333' }}>
+              {numberOfPositions === 0 ? `Final Score: ${score}` : `Score: ${score} / 30`}
+            </Text>
+          </View>
+          {/* Overlay result message in the middle of the screen */}
+          {resultMessage && (
+            <View style={{ position: 'absolute', top: '45%', left: 0, right: 0, alignItems: 'center', zIndex: 100 }} pointerEvents="none">
+              <Text style={{
+                fontSize: 36,
+                fontWeight: 'bold',
+                color: resultMessage.includes('Correct') ? '#3a7d3a' : '#b22222',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                paddingHorizontal: 32,
+                paddingVertical: 16,
+                borderRadius: 18,
+                overflow: 'hidden',
+                shadowColor: '#000',
+                shadowOpacity: 0.18,
+                shadowRadius: 10,
+                elevation: 6,
+                textAlign: 'center',
+              }}>
+                {resultMessage}
+              </Text>
+            </View>
+          )}
+          {/* Answer bar (note buttons) */}
+          <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20 }]}> 
+            <View style={{ width: '100%', alignItems: 'center', marginBottom: 2 }}>
+              <Text style={{ color: "black", fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>guess left {numberOfPositions}:</Text>
+            </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' }}>
+              {NOTE_NAMES.map(note => (
+                <Button
+                  key={note}
+                  onPress={() => {
+                    if (numberOfPositions === 0) {
+                      setResultMessage("No more notes to guess, final score: 0 /" + score);
+                      return;
+                    }
+                    if (noteDot.includes(note)) {
+                      setResultMessage(" Correct!");
+                      setNoteDot(GenDotList());
+                      setScore(score + 1);
+                      setNumberOfPositions(numberOfPositions - 1);
+                    } else {
+                      setResultMessage(" Incorrect!");
+                      setNoteDot(GenDotList());
+                      setNumberOfPositions(numberOfPositions - 1);
+                    }
+                  }}
+                  style={styles.noteButton}
+                >
+                  <Text style={styles.noteButtonText}>{note}</Text>
+                </Button>
+              ))}
+            </View>
+          </View>
+          {/* Fretboard, slightly bigger height for better fit */}
+          <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 40, marginBottom: 20 }}>
+            <Fretboard frets={frets} strings={strings} fretboardHeight={170} noteDot={noteDot} />
+          </View>
         </View>
       </View>
-    </View>
-  );
-}
+    );
+  }
 
-const ScoreBoard: React.FC<ScoreProp> = ({ score, numberOfPositions }) => {
-  const isFinal = numberOfPositions === 0;
-
+  // Default to menu
   return (
-    <View
-      style={{
-        padding: 10,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        marginTop: 20,
-        marginBottom: 100,
-        alignItems: 'center',
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#333',
-        }}
-      >
-        {isFinal ? `Final Score: ${score}` : `Score: ${score} / 30`}
-      </Text>
-    </View>
-  )
+    <Menu
+      onCampaign={() => setScreen('campaign')}
+      onFreeMode={() => setScreen('free')}
+      onSettings={() => {}}
+    />
+  );
 }
