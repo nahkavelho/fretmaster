@@ -13,7 +13,11 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
         // 5% margin at top/bottom so strings don't touch the edge
         const marginPercent = 0.05;
         const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
-        const top = (marginPercent * fretboardHeight) + (i / (strings.length - 1)) * usableHeight;
+        // Clamp string center so string stays within the box
+        const stringHeight = i === strings.length - 1 ? 4 : 2;
+        // Adjust so string is always inside the box, not over
+        const top = (marginPercent * fretboardHeight) + (i / (strings.length - 1)) * usableHeight - stringHeight / 2;
+        const isLast = i === strings.length - 1;
         return (
           <View
             key={string}
@@ -22,8 +26,8 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
               left: 0,
               right: 0,
               top,
-              height: 2,
-              backgroundColor: '#C0C0C0', // silver string
+              height: stringHeight,
+              backgroundColor: '#C0C0C0', // all strings silver
               shadowColor: '#543310', // deep brown shadow
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.4,
