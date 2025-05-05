@@ -10,14 +10,15 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
   return (
     <>
       {strings.map((string: number, i: number) => {
-        // 5% margin at top/bottom so strings don't touch the edge
-        const marginPercent = 0.05;
+        // 1% margin at top/bottom so strings don't touch the edge
+        const marginPercent = 0.01; // Reduce margin for wider string spacing
+        // Make the strings fully symmetrical: use N+1 gaps for N strings
         const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
-        // Clamp string center so string stays within the box
-        const stringHeight = i === strings.length - 1 ? 4 : 2;
-        // Adjust so string is always inside the box, not over
-        const top = (marginPercent * fretboardHeight) + (i / (strings.length - 1)) * usableHeight - stringHeight / 2;
-        const isLast = i === strings.length - 1;
+        const stringHeight = 2; // Use a constant string thickness for better alignment
+        // Place strings at (k / (strings.length + 1)) for k=1..N
+        const renderedIndex = (strings.length - 1) - i;
+        const gapCount = strings.length + 1;
+        const top = (marginPercent * fretboardHeight) + ((renderedIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
         return (
           <View
             key={string}

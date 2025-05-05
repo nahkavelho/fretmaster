@@ -6,11 +6,12 @@ import Fretboard from "./components/Fretboard"
 import Button from "../components/ui/button"
 import Menu from "./components/Menu"
 import Campaign from "./components/Campaign"
-import GenDotList from "./components/DotPositions"
+import GenDotList, { ManualDotPosition } from "./components/DotPositions"
 import { NoteDot } from "./components/DotPositions"
 import LoginScreen from '../LoginScreen';
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, Auth } from "firebase/auth";
 import { auth } from "../firebase";
+import Settings from "./components/Settings";
 
 interface ScoreProp {
   score: number
@@ -87,17 +88,26 @@ const styles = StyleSheet.create({
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [authChecked, setAuthChecked] = React.useState(false);
-  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free'>('menu');
+  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings'>('menu');
 
   // Free mode state (always defined, only used when in free mode)
   const [fretboardHeight, setFretboardHeight] = React.useState(140);
-  const [noteDot, setNoteDot] = React.useState<NoteDot>(GenDotList());
+  const [manualMode, setManualMode] = React.useState(false);
+  const [manualString, setManualString] = React.useState(0); // First string (High E, 0-indexed, at the top)
+  const [manualFret, setManualFret] = React.useState(0);    // First fret
+  const [verticalOffset, setVerticalOffset] = React.useState(0); // No additional offset by default
+  const [horizontalOffset, setHorizontalOffset] = React.useState(0); // Horizontal offset
+  const [noteDot, setNoteDot] = React.useState<NoteDot>(
+    manualMode 
+      ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+      : GenDotList(fretboardHeight, strings.length)
+  );
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
   const [numberOfPositions, setNumberOfPositions] = React.useState(30);
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
       setLoggedIn(!!user);
       setAuthChecked(true);
     });
@@ -124,6 +134,16 @@ export default function Screen() {
     return <Campaign onBack={() => setScreen('menu')} />;
   }
 
+  if (screen === 'settings') {
+    return (
+      <Settings 
+        onBack={() => setScreen('menu')} 
+        manualMode={manualMode}
+        setManualMode={setManualMode}
+      />
+    );
+  }
+
   if (screen === 'free') {
     return (
       <View style={styles.root}>
@@ -134,7 +154,7 @@ export default function Screen() {
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Menu"}</Text>
             </Button>
             <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
-              setNoteDot(GenDotList());
+              setNoteDot(GenDotList(fretboardHeight, strings.length));
               setResultMessage(null);
               setScore(0);
               setNumberOfPositions(5);
@@ -142,10 +162,27 @@ export default function Screen() {
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
             </Button>
           </View>
-          {/* Floating Scoreboard - Top Right */}
-          <View style={{ alignItems: 'flex-end', marginTop: 0, marginBottom: 8, zIndex: 10, backgroundColor: '#fff', borderRadius: 12, padding: 10, minWidth: 150, position: 'absolute', right: 8, top: 8, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333' }}>
-              {numberOfPositions === 0 ? `Final Score: ${score}` : `Score: ${score} / 30`}
+          {/* Score display in top right corner */}
+          <View style={{ 
+            position: 'absolute', 
+            top: 10, 
+            right: 10, 
+            backgroundColor: '#74512D',
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: '#543310',
+            flexDirection: 'row',
+            alignItems: 'center',
+            zIndex: 20
+          }}>
+            <Text style={{ 
+              color: "#F8F4E1", 
+              fontWeight: "bold", 
+              fontSize: 14 
+            }}>
+              Score: {score}/{30}
             </Text>
           </View>
           {/* Overlay result message in the middle of the screen */}
@@ -170,10 +207,153 @@ export default function Screen() {
               </Text>
             </View>
           )}
+          {/* UI for manual dot positioning */}
+          {manualMode && (
+            <View style={{ 
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginVertical: 10,
+              gap: 10,
+              padding: 10,
+              backgroundColor: '#AF8F6F',
+              borderRadius: 8
+            }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: '#543310', marginBottom: 5 }}>Manual Position</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Button
+                    style={{ backgroundColor: manualMode ? '#543310' : '#74512D', padding: 8, minWidth: 80 }}
+                    onPress={() => {
+                      setManualMode(!manualMode);
+                      // Update dot position based on new mode
+                      setNoteDot(
+                        !manualMode 
+                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          : GenDotList(fretboardHeight, strings.length)
+                      );
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>{manualMode ? 'On' : 'Off'}</Text>
+                  </Button>
+                </View>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: '#543310', marginBottom: 5 }}>String</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newString = Math.max(0, manualString - 1);
+                      setManualString(newString);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>-</Text>
+                  </Button>
+                  <Text style={{ color: '#543310', marginHorizontal: 10, fontWeight: 'bold' }}>{manualString + 1}</Text>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newString = Math.min(strings.length - 1, manualString + 1);
+                      setManualString(newString);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>+</Text>
+                  </Button>
+                </View>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: '#543310', marginBottom: 5 }}>Fret</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newFret = Math.max(0, manualFret - 1);
+                      setManualFret(newFret);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>-</Text>
+                  </Button>
+                  <Text style={{ color: '#543310', marginHorizontal: 10, fontWeight: 'bold' }}>{manualFret}</Text>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newFret = Math.min(12, manualFret + 1);
+                      setManualFret(newFret);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>+</Text>
+                  </Button>
+                </View>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: '#543310', marginBottom: 5 }}>Vertical Offset</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newOffset = verticalOffset - 2; // Move up by 2px
+                      setVerticalOffset(newOffset);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>↑</Text>
+                  </Button>
+                  <Text style={{ color: '#543310', marginHorizontal: 10, fontWeight: 'bold' }}>{verticalOffset}</Text>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newOffset = verticalOffset + 2; // Move down by 2px
+                      setVerticalOffset(newOffset);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>↓</Text>
+                  </Button>
+                </View>
+              </View>
+              
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ color: '#543310', marginBottom: 5 }}>Horizontal Offset</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newOffset = horizontalOffset - 2; // Move left by 2px
+                      setHorizontalOffset(newOffset);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>←</Text>
+                  </Button>
+                  <Text style={{ color: '#543310', marginHorizontal: 10, fontWeight: 'bold' }}>{horizontalOffset}</Text>
+                  <Button
+                    style={{ backgroundColor: '#74512D', padding: 8 }}
+                    onPress={() => {
+                      const newOffset = horizontalOffset + 2; // Move right by 2px
+                      setHorizontalOffset(newOffset);
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>→</Text>
+                  </Button>
+                </View>
+              </View>
+            </View>
+          )}
           {/* Answer bar (note buttons) */}
           <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20 }]}> 
             <View style={{ width: '100%', alignItems: 'center', marginBottom: 2 }}>
-              <Text style={{ color: "black", fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>guess left {numberOfPositions}:</Text>
+              <Text style={{ color: "black", fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>
+                Guesses left: {numberOfPositions} | Current Note: {noteDot[2]} | String: {noteDot[3]+1} Fret: {noteDot[4]}
+              </Text>
             </View>
             <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' }}>
               {NOTE_NAMES.map(note => (
@@ -184,14 +364,22 @@ export default function Screen() {
                       setResultMessage("No more notes to guess, final score: 0 /" + score);
                       return;
                     }
-                    if (noteDot.includes(note)) {
-                      setResultMessage(" Correct!");
-                      setNoteDot(GenDotList());
+                    if (noteDot[2] === note) {
+                      setResultMessage("Correct!");
+                      setNoteDot(
+                        manualMode 
+                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          : GenDotList(fretboardHeight, strings.length)
+                      );
                       setScore(score + 1);
                       setNumberOfPositions(numberOfPositions - 1);
                     } else {
-                      setResultMessage(" Incorrect!");
-                      setNoteDot(GenDotList());
+                      setResultMessage(`Wrong! Note was ${noteDot[2]}`);
+                      setNoteDot(
+                        manualMode 
+                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          : GenDotList(fretboardHeight, strings.length)
+                      );
                       setNumberOfPositions(numberOfPositions - 1);
                     }
                   }}
@@ -216,7 +404,7 @@ export default function Screen() {
     <Menu
       onCampaign={() => setScreen('campaign')}
       onFreeMode={() => setScreen('free')}
-      onSettings={() => {}}
+      onSettings={() => setScreen('settings')}
     />
   );
 }

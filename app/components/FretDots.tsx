@@ -11,27 +11,33 @@ const dotFrets = [3, 5, 7, 9];
 const doubleDotFrets = [12];
 
 const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
-  const dotSize = 20;
-  // By default, dots are vertically centered. Adjust offset to move up/down:
-  const centerY = fretboardHeight / 2 - dotSize / 2 + 0;
+  const dotSize = 16; // Smaller dot size for more realistic fretboard dots
+  // Use the same symmetrical gap logic as strings for vertical centering
+  const marginPercent = 0.01;
+  const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
+  // Place fretboard dots at exact center
+  const stringCount = 6; // Standard guitar has 6 strings
+  const centerY = fretboardHeight / 2 - dotSize / 2;
 
   return (
     <>
       {frets.map((fret, i) => {
         if (!dotFrets.includes(fret) && !doubleDotFrets.includes(fret)) return null;
-        // To adjust horizontal position, edit the 'left' calculation below
-        const left = ((i + 0.3) / frets.length) * 100; // Horizontal position as % of fretboard width
+        // Adjust horizontal position to be centered between frets
+        const left = ((i + 0.5) / frets.length) * 100;
 
         if (doubleDotFrets.includes(fret)) {
-          // Double dots (12): stack two dots vertically
-          // Adjust the +/- 37 values below to change the vertical spacing between double dots
+          // For double dots (12th fret), place them at 3rd and 4th string positions
+          const string3Pos = (marginPercent * fretboardHeight) + ((2.5) / (stringCount + 1)) * usableHeight - dotSize / 2;
+          const string4Pos = (marginPercent * fretboardHeight) + ((4.5) / (stringCount + 1)) * usableHeight - dotSize / 2;
+          
           return (
             <React.Fragment key={`dot-double-${fret}`}>
               <View
                 style={{
                   position: 'absolute',
                   left: `${left}%`,
-                  top: centerY - 37,
+                  top: string3Pos,
                   width: dotSize,
                   height: dotSize,
                   borderRadius: dotSize / 2,
@@ -42,7 +48,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
                 style={{
                   position: 'absolute',
                   left: `${left}%`,
-                  top: centerY + 37,
+                  top: string4Pos,
                   width: dotSize,
                   height: dotSize,
                   borderRadius: dotSize / 2,
@@ -52,7 +58,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
             </React.Fragment>
           );
         }
-        // Single dot
+        // Single dot - centered vertically
         return (
           <View
             key={`dot-${fret}`}
