@@ -80,6 +80,14 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode }
           value={manualMode}
         />
       </View>
+      <View style={styles.settingRow}>
+        <View>
+          <Text style={styles.settingLabel}>Change Difficulty</Text>
+          <Text style={styles.settingDescription}>
+            How many positions are shown on the fretboard at once.
+          </Text>
+        </View>   
+      </View>
       
       <Button onPress={onBack} style={styles.backButton}>
         <Text style={styles.backButtonText}>Back to Menu</Text>

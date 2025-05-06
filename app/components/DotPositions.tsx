@@ -81,7 +81,7 @@ function ManualDotPosition(
   // Apply horizontal offset if provided
   x += horizontalOffset;
   
-  const note = guitarNotes[stringIndex][fretIndex];
+  const note = guitarNotes[stringIndex][fretIndex];  
   
   return [x, y, note, stringIndex, fretIndex];
 }
@@ -100,7 +100,7 @@ function GenDotList(
   }
 
   const noteStepx = 29;
-  const numberOfPositions = 78;
+  const numberOfPositions = [6,12,18,24,30,36,42,48,54,60,66,72,78];
   const oneStringPositions = 13;
   const FirstNoteX = 10;
   const DOT_SIZE = 16;
@@ -126,7 +126,7 @@ function GenDotList(
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
   const gapCount = numStrings + 1;
 
-  const listOfPositions = Array.from({ length: numberOfPositions }, (_, index) => index);
+  const listOfPositions = Array.from({ length: numberOfPositions[12] }, (_, index) => index);
   const dotCoordinates = listOfPositions.map((position) => {
     const fretIndex = position % oneStringPositions;
     const stringIndex = Math.floor(position / oneStringPositions);
@@ -173,7 +173,8 @@ function GenDotList(
     }
     
     const note = guitarNotes[stringIndex][fretIndex];
-    return [x, y, note, stringIndex, fretIndex];
+    console.log(`String: ${stringIndex}, Fret: ${fretIndex}, Note: ${note}`)
+    return [x, y, note];
   });
   const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
   return dotCoordinates[randomIndex] as NoteDot;
