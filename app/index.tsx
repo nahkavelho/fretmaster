@@ -2,12 +2,12 @@ import * as React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import * as ScreenOrientation from 'expo-screen-orientation'
 import "../app.css";
-import Fretboard from "./components/Fretboard"
-import Button from "../components/ui/button"
-import Menu from "./components/Menu"
-import Campaign from "./components/Campaign"
-import GenDotList, { ManualDotPosition } from "./components/DotPositions"
-import { NoteDot } from "./components/DotPositions"
+import Fretboard from "./components/Fretboard";
+import Button from "../components/ui/button";
+import Menu from "./components/Menu";
+import Campaign from "./components/Campaign";
+import GenDotList, { ManualDotPosition } from "./components/DotPositions";
+import { NoteDot } from "./components/DotPositions";
 import LoginScreen from '../LoginScreen';
 import { onAuthStateChanged, Auth } from "firebase/auth";
 import { auth } from "../firebase";
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [authChecked, setAuthChecked] = React.useState(false);
-  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings'>('menu');
+  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
 
   // Free mode state (always defined, only used when in free mode)
   const [fretboardHeight, setFretboardHeight] = React.useState(140);
@@ -399,12 +399,94 @@ export default function Screen() {
     );
   }
 
+  // Profile screen
+  if (screen === 'profile') {
+    const user = auth.currentUser;
+    return (
+      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F4E1' }]}> 
+        <View style={{
+          backgroundColor: '#fff',
+          borderRadius: 24,
+          padding: 32,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.10,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+          minWidth: 320,
+          maxWidth: 380,
+        }}>
+          {/* Profile avatar/icon */}
+          <View style={{
+            width: 80, height: 80, borderRadius: 40, backgroundColor: '#AF8F6F',
+            alignItems: 'center', justifyContent: 'center', marginBottom: 18, borderWidth: 2, borderColor: '#74512D',
+          }}>
+            <Text style={{ fontSize: 40, color: '#F8F4E1', fontWeight: 'bold' }}>
+              {user?.email ? user.email[0].toUpperCase() : 'U'}
+            </Text>
+          </View>
+          {/* Profile title */}
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#543310', marginBottom: 10, letterSpacing: 1 }}>User Profile</Text>
+          {/* Display name */}
+          <Text style={{ fontSize: 20, color: '#543310', fontWeight: '600', marginBottom: 8, backgroundColor: '#F8F4E1', padding: 8, borderRadius: 8 }}>
+            {user?.displayName || 'No display name set'}
+          </Text>
+          {/* Email */}
+          <Text style={{ fontSize: 18, color: '#74512D', marginBottom: 24, fontWeight: '600', backgroundColor: '#F8F4E1', padding: 8, borderRadius: 8 }}>
+            {user?.email || 'N/A'}
+          </Text>
+          <Button
+            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            onPress={() => setScreen('menu')}
+          >
+            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
   // Default to menu
   return (
     <Menu
       onCampaign={() => setScreen('campaign')}
       onFreeMode={() => setScreen('free')}
       onSettings={() => setScreen('settings')}
+      // Add a Profile button to the menu
+      extraButtons={
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          <Button
+            style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
+            onPress={() => setScreen('profile')}
+          >
+            <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
+          </Button>
+          <Button
+            style={{ backgroundColor: "#74512D", padding: 12, borderRadius: 8, minWidth: 110 }}
+            onPress={() => {
+              import('react-native').then(({ Alert }) => {
+                Alert.alert(
+                  'Log out',
+                  'Are you sure you want to log out?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Log out', style: 'destructive', onPress: async () => {
+                        const { signOut } = await import('firebase/auth');
+                        await signOut(auth);
+                        setLoggedIn(false);
+                        setScreen('menu');
+                      }
+                    },
+                  ]
+                );
+              });
+            }}
+          >
+            <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Logout</Text>
+          </Button>
+        </View>
+      }
     />
   );
 }

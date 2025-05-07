@@ -6,6 +6,7 @@ interface MenuProps {
   onCampaign: () => void;
   onFreeMode: () => void;
   onSettings: () => void;
+  extraButtons?: React.ReactNode;
 }
 
 const styles = StyleSheet.create({
@@ -25,7 +26,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings }) => (
+const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraButtons }) => (
   <View className="flex-1 justify-center items-center" style={{ backgroundColor: '#F8F4E1' }}> 
     <Text style={{ color: "#543310", fontSize: 32, fontWeight: "bold", marginBottom: 32 }}>Fretboard Trainer</Text>
     <Button onPress={onCampaign} style={[styles.button, { backgroundColor: '#543310' }] }>
@@ -37,6 +38,7 @@ const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings }) => (
     <Button onPress={onSettings} style={[styles.button, { backgroundColor: '#AF8F6F', marginBottom: 0 }] }>
       <Text style={[styles.buttonText, { color: "#543310" }]}>Settings</Text>
     </Button>
+    {extraButtons}
   </View>
 );
 
