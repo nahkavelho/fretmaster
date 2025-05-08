@@ -106,9 +106,11 @@ function ManualDotPosition(
 function GenDotList(
   fretboardHeight: number,
   numStrings: number,
+  difficulty: number,
   manualString?: number,
   manualFret?: number,
-  verticalOffset: number = 0
+  verticalOffset: number = 0,
+  
 ) {
   // If manual position is specified, use that instead of random
   if (manualString !== undefined && manualFret !== undefined) {
@@ -125,7 +127,7 @@ function GenDotList(
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
   const gapCount = numStrings + 1;
 
-  const listOfPositions = Array.from({ length: numberOfPositions[1] }, (_, index) => index);
+  const listOfPositions = Array.from({ length: numberOfPositions[difficulty] }, (_, index) => index);
   const dotCoordinates = listOfPositions.map((position) => {
     const fretIndex = Math.floor(position / numStrings)
     const stringIndex = position % numStrings

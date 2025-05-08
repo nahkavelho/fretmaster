@@ -19,9 +19,9 @@ interface ScoreProp {
 }
 export const screenOptions = {
   headerShown: false,
-};
-const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const strings = [1, 2, 3, 4, 5, 6];
+}
+const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const strings = [1, 2, 3, 4, 5, 6]
 const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
 // Force light mode for the app
 const forcedColorScheme = 'light'
@@ -91,6 +91,7 @@ export default function Screen() {
   const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
 
   // Free mode state (always defined, only used when in free mode)
+  const [difficulty, setDifficulty] = React.useState(0);
   const [fretboardHeight, setFretboardHeight] = React.useState(140);
   const [manualMode, setManualMode] = React.useState(false);
   const [manualString, setManualString] = React.useState(0); // First string (High E, 0-indexed, at the top)
@@ -100,7 +101,7 @@ export default function Screen() {
   const [noteDot, setNoteDot] = React.useState<NoteDot>(
     manualMode 
       ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-      : GenDotList(fretboardHeight, strings.length)
+      : GenDotList(fretboardHeight, strings.length, difficulty)
   );
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
@@ -140,6 +141,8 @@ export default function Screen() {
         onBack={() => setScreen('menu')} 
         manualMode={manualMode}
         setManualMode={setManualMode}
+        difficulty={difficulty}
+        setDifficulty={setDifficulty}
       />
     );
   }
@@ -154,7 +157,7 @@ export default function Screen() {
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Menu"}</Text>
             </Button>
             <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
-              setNoteDot(GenDotList(fretboardHeight, strings.length));
+              setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
               setResultMessage(null);
               setScore(0);
               setNumberOfPositions(5);
@@ -230,7 +233,7 @@ export default function Screen() {
                       setNoteDot(
                         !manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                          : GenDotList(fretboardHeight, strings.length)
+                          : GenDotList(fretboardHeight, strings.length, difficulty )
                       );
                     }}
                   >
@@ -369,7 +372,7 @@ export default function Screen() {
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                          : GenDotList(fretboardHeight, strings.length)
+                          : GenDotList(fretboardHeight, strings.length, difficulty)
                       );
                       setScore(score + 1);
                       setNumberOfPositions(numberOfPositions - 1);
@@ -378,7 +381,7 @@ export default function Screen() {
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                          : GenDotList(fretboardHeight, strings.length)
+                          : GenDotList(fretboardHeight, strings.length, difficulty)
                       );
                       setNumberOfPositions(numberOfPositions - 1);
                     }
