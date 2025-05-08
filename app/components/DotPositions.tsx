@@ -1,4 +1,35 @@
 type NoteDot = [number, number, string, number, number];
+type Note = string;
+// Each of the 6 strings has 13 notes (0-12 frets, where 0 is the open string)
+
+const guitarNotes: Note[][] = [
+  // 0th fret (open string)
+  ["E","B","G","D","A","E"],
+  // 1st fret
+  ["F","C","G#","D#","A#","F"],
+  // 2nd fret
+  ["F#","C#","A","E","B","F#"],
+  // 3rd fret
+  ["G","D","A#","F","C","G"],
+  // 4th fret
+  ["G#","D#","B","F#","C#","G#"],
+  // 5th fret
+  ["A","E","C","G","D","A"],
+  // 6th fret
+  ["A#","F","C#","G#","D#","A#"],
+  // 7th fret
+  ["B","F#","D","A","E","B"],
+  // 8th fret
+  ["C","G","D#","A#","F","C"],
+  // 9th fret
+  ["C#","G#","E","B","F#","C#"],
+  // 10th fret
+  ["D","A","F","C","G","D"],
+  // 11th fret
+  ["D#","A#","F#","C#","G#","D#"],
+  // 12th fret
+  ["E","B","G","D","A","E"],
+]
 
 // Manually place a dot at a specific string and fret
 function ManualDotPosition(
@@ -17,22 +48,7 @@ function ManualDotPosition(
   const FirstNoteX = 10;
   const DOT_SIZE = 16;
   
-  type Note = string;
   // Each of the 6 strings has 13 notes (0-12 frets, where 0 is the open string)
-  const guitarNotes: Note[][] = [
-    // 1st string (High E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-    // 2nd string (B)
-    ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-    // 3rd string (G)
-    ["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
-    // 4th string (D)
-    ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
-    // 5th string (A)
-    ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
-    // 6th string (Low E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-  ];
 
   const marginPercent = 0.01;
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
@@ -101,36 +117,18 @@ function GenDotList(
 
   const noteStepx = 29;
   const numberOfPositions = [6,12,18,24,30,36,42,48,54,60,66,72,78];
-  const oneStringPositions = 13;
   const FirstNoteX = 10;
   const DOT_SIZE = 16;
-  type Note = string;
-  // Each of the 6 strings has 13 notes (0-12 frets, where 0 is the open string)
-  const guitarNotes: Note[][] = [
-    // 1st string (High E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-    // 2nd string (B)
-    ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-    // 3rd string (G)
-    ["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
-    // 4th string (D)
-    ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
-    // 5th string (A)
-    ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
-    // 6th string (Low E)
-    ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-  ];
 
   // Match Strings.tsx EXACTLY
   const marginPercent = 0.01;
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
   const gapCount = numStrings + 1;
 
-  const listOfPositions = Array.from({ length: numberOfPositions[12] }, (_, index) => index);
+  const listOfPositions = Array.from({ length: numberOfPositions[1] }, (_, index) => index);
   const dotCoordinates = listOfPositions.map((position) => {
-    const fretIndex = position % oneStringPositions;
-    const stringIndex = Math.floor(position / oneStringPositions);
-    
+    const fretIndex = Math.floor(position / numStrings)
+    const stringIndex = position % numStrings
     // CRITICAL: Reverse the string index to match Strings.tsx (this is in the Strings.tsx file)
     const renderedIndex = (numStrings - 1) - stringIndex;
     
@@ -172,9 +170,9 @@ function GenDotList(
       x = ((FirstNoteX + (fretIndex - 1) * noteStepx) / 100) * noteStepx;
     }
     
-    const note = guitarNotes[stringIndex][fretIndex];
-    console.log(`String: ${stringIndex}, Fret: ${fretIndex}, Note: ${note}`)
-    return [x, y, note];
+    const note = guitarNotes[fretIndex][stringIndex]
+
+    return [x, y, note, stringIndex, fretIndex]
   });
   const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
   return dotCoordinates[randomIndex] as NoteDot;
