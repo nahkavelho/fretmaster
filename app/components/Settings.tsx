@@ -5,7 +5,9 @@ import Button from "../../components/ui/button";
 interface SettingsProps {
   onBack: () => void;
   manualMode: boolean;
+  difficulty: number;
   setManualMode: (value: boolean) => void;
+  setDifficulty: (value: number) => void;
 }
 
 const styles = StyleSheet.create({
@@ -59,7 +61,7 @@ const styles = StyleSheet.create({
   }
 });
 
-const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode }) => {
+const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, difficulty, setDifficulty  }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
@@ -80,12 +82,42 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode }
           value={manualMode}
         />
       </View>
+      <View style={styles.settingRow}>
+        <View>
+          <Text style={styles.settingLabel}>Change Difficulty</Text>
+          <Text style={styles.settingDescription}>
+            How many positions are shown on the fretboard at once.
+            0 is open string, 1 is first fret, etc.
+          </Text>
+          <View style={{ flexDirection: "row", marginTop: 10 }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((level) => (
+              <Button
+                key={level}
+                onPress={() => setDifficulty(level)}
+                style={{
+                  marginHorizontal: 5,
+                  backgroundColor: difficulty === level ? "#74512D" : "#CCCCCC",
+                  padding: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: "#F8F4E1" }}>
+                  {level}
+                </Text>
+              </Button>
+            ))}
+          </View>
+          <Text style={{ color: "#543310", fontSize: 14, marginTop: 4 }}>Current Difficulty: {difficulty}</Text>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        </View>   
+      </View>
       
       <Button onPress={onBack} style={styles.backButton}>
         <Text style={styles.backButtonText}>Back to Menu</Text>
       </Button>
     </View>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings
