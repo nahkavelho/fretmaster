@@ -395,7 +395,7 @@ export default function Screen() {
           </View>
           {/* Fretboard, slightly bigger height for better fit */}
           <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 40, marginBottom: 20 }}>
-            <Fretboard frets={frets} strings={strings} fretboardHeight={170} noteDot={noteDot} />
+            <Fretboard frets={frets} strings={strings} fretboardHeight={170} noteDot={noteDot} difficulty={difficulty} />
           </View>
         </View>
       </View>

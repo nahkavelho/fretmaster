@@ -3,12 +3,14 @@ import Frets from "./Frets"
 import Strings from "./Strings"
 import FretDots from "./FretDots"
 import { View } from "react-native"
+import { Dimensions } from 'react-native'
 
 interface FretboardProps {
   frets: number[]
   strings: number[]
   fretboardHeight: number
   noteDot: [x: number, y: number, note: string, stringIndex: number, fretIndex: number]
+  difficulty: number
 }
 
 interface DrawNoteDotProps {
@@ -18,22 +20,20 @@ interface DrawNoteDotProps {
 // Theme browns
 const BROWN_BG = '#74512D'; // mid brown, matches Free Mode/menu/fret dots
 const BORDER = '#AF8F6F'; // tan border
+// area that is not in use by dufficulties
+const UNUSED_AREA_COLOR = '#C0C0C0';
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot}) => {
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty}) => {
+
+    const max_difficulty = 12;
+    const screenWidth = Dimensions.get('window').width;
+    const percent = Math.min(100, Math.max(0, (difficulty / max_difficulty) * 100));
+    const usedWidth = (percent / 100) * screenWidth;
+    
   return (
-    <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: BROWN_BG, borderRadius: 16, borderWidth: 4, borderColor: BORDER, overflow: 'hidden' }}>
+    <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: UNUSED_AREA_COLOR, borderRadius: 16, borderWidth: 4, borderColor: BORDER }}>
       {/* Guitar Nut (white bar at the left edge) */}
-      <View
-        style={{
-          position: 'absolute',
-          left: '0%',
-          top: 0,
-          bottom: 0,
-          width: 8,
-          backgroundColor: '#FFFFFF',
-          zIndex: 5, // Above the fretboard, below the dots
-        }}
-      />
+      <View style={{ position: 'absolute', left: 0, top: 0, width: usedWidth, height: fretboardHeight, backgroundColor: BROWN_BG }} />
       {/* Strings (horizontal lines) */}
       <Strings strings={strings} fretboardHeight={fretboardHeight} />
       {/* Dots */}
