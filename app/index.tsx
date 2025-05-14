@@ -89,7 +89,6 @@ export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [authChecked, setAuthChecked] = React.useState(false);
   const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
-
   // Free mode state (always defined, only used when in free mode)
   const [difficulty, setDifficulty] = React.useState(0);
   const [fretboardHeight, setFretboardHeight] = React.useState(140);
@@ -106,6 +105,12 @@ export default function Screen() {
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
   const [numberOfPositions, setNumberOfPositions] = React.useState(30);
+
+  const SetLevel = (level: number) => {
+    setDifficulty(level - 1);
+    setScreen('free');
+    console.log('Selected level:', level);
+  }
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
@@ -132,7 +137,7 @@ export default function Screen() {
   }
 
   if (screen === 'campaign') {
-    return <Campaign onBack={() => setScreen('menu')} />;
+    return <Campaign onBack={() => setScreen('menu')} onLevelSelect={SetLevel} />;
   }
 
   if (screen === 'settings') {
