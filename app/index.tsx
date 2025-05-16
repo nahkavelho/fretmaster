@@ -104,8 +104,8 @@ export default function Screen() {
   );
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
-  const [numberOfPositions, setNumberOfPositions] = React.useState(30);
-
+  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
+  const [unlockedLevel, setUnlockedLevel] = React.useState(1);
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -137,7 +137,7 @@ export default function Screen() {
   }
 
   if (screen === 'campaign') {
-    return <Campaign onBack={() => setScreen('menu')} onLevelSelect={SetLevel} />;
+    return <Campaign onBack={() => setScreen('menu')} onLevelSelect={SetLevel} unlockedLevel={unlockedLevel} />;
   }
 
   if (screen === 'settings') {
@@ -165,7 +165,7 @@ export default function Screen() {
               setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
               setResultMessage(null);
               setScore(0);
-              setNumberOfPositions(5);
+              setNumberOfPositions(30);
             }}>
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
             </Button>
