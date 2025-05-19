@@ -106,6 +106,7 @@ export default function Screen() {
   const [score, setScore] = React.useState(0);
   const [numberOfPositions, setNumberOfPositions] = React.useState(30)
   const [unlockedLevel, setUnlockedLevel] = React.useState(1);
+  const [campaignMode, setCampaignMode] = React.useState(true)
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -136,8 +137,14 @@ export default function Screen() {
     return <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
-  if (screen === 'campaign') {
-    return <Campaign onBack={() => setScreen('menu')} onLevelSelect={SetLevel} unlockedLevel={unlockedLevel} />;
+  if (screen === 'campaign'){
+    return (
+      <Campaign
+        onBack={() => setScreen('menu')}
+        onLevelSelect={SetLevel}
+        unlockedLevel={unlockedLevel}
+      />
+    );
   }
 
   if (screen === 'settings') {
@@ -161,7 +168,8 @@ export default function Screen() {
             <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => setScreen('menu')}>
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Menu"}</Text>
             </Button>
-            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
+            {!campaignMode && (
+              <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
               setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
               setResultMessage(null);
               setScore(0);
@@ -169,6 +177,7 @@ export default function Screen() {
             }}>
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
             </Button>
+            )}
           </View>
           {/* Score display in top right corner */}
           <View style={{ 
@@ -458,8 +467,15 @@ export default function Screen() {
   // Default to menu
   return (
     <Menu
-      onCampaign={() => setScreen('campaign')}
-      onFreeMode={() => setScreen('free')}
+      onCampaign={() => {
+        setScreen('campaign');
+        setUnlockedLevel(1);
+        setCampaignMode(true);
+      }}
+      onFreeMode={() => { 
+        setScreen('free')
+        setCampaignMode(false);
+      }}
       onSettings={() => setScreen('settings')}
       // Add a Profile button to the menu
       extraButtons={

@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel }) => (
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel  }) => (
   <View style={styles.container}>
     <Text style={styles.title}>Campaign</Text>
     <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', marginTop: 32 }}>
@@ -62,7 +62,7 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
         <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
           <TouchableOpacity
             disabled={quest.id > unlockedLevel}
-            onPress={() => { onLevelSelect(quest.id) }}
+            onPress={() => { onLevelSelect(quest.id); }}
             activeOpacity={0.8}
             style={{ padding: 8 }}
           >
