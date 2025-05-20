@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Animated } from 'react-native'
+import Icon from 'react-native-vector-icons/MaterialIcons'
 import * as ScreenOrientation from 'expo-screen-orientation'
 import "../app.css";
 import Fretboard from "./components/Fretboard";
@@ -84,6 +85,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+// Animated feedback component for result icon
+const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
+  const opacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (resultMessage) {
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 380,
+          delay: 620,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      opacity.setValue(0);
+    }
+  }, [resultMessage]);
+
+  if (!resultMessage) return null;
+  return (
+    <Animated.View style={{
+      position: 'absolute',
+      top: '45%',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 100,
+      opacity,
+      pointerEvents: 'none',
+    }}>
+      {resultMessage === '✅' ? (
+        <View style={{
+          backgroundColor: 'rgba(58,125,58,0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Icon name="check" size={56} color="#00C853" />
+        </View>
+      ) : resultMessage === '❌' ? (
+        <View style={{
+          backgroundColor: 'rgba(178,34,34,0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
+        </View>
+      ) : null}
+    </Animated.View>
+  );
+};
 
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
@@ -189,42 +249,25 @@ export default function Screen() {
             </Text>
           </View>
           {/* Overlay result message in the middle of the screen */}
-          {resultMessage && (
-            <View style={{ position: 'absolute', top: '45%', left: 0, right: 0, alignItems: 'center', zIndex: 100 }} pointerEvents="none">
-              <Text style={{
-                fontSize: 36,
-                fontWeight: 'bold',
-                color: resultMessage.includes('Correct') ? '#3a7d3a' : '#b22222',
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                paddingHorizontal: 32,
-                paddingVertical: 16,
-                borderRadius: 18,
-                overflow: 'hidden',
-                shadowColor: '#000',
-                shadowOpacity: 0.18,
-                shadowRadius: 10,
-                elevation: 6,
-                textAlign: 'center',
-              }}>
-                {resultMessage}
-              </Text>
-            </View>
-          )}
+          {/* Animated feedback icon */}
+          <AnimatedFeedback resultMessage={resultMessage} />
           {/* UI for manual dot positioning */}
           {manualMode && (
-            <View style={{ 
-              flexDirection: 'row',
+            <View style={{
+              flexDirection: 'column', // Stack vertically for better fit
               justifyContent: 'center',
               alignItems: 'center',
-              marginVertical: 10,
-              gap: 10,
-              padding: 10,
+              marginVertical: 6,
+              gap: 6,
+              padding: 6,
               backgroundColor: '#AF8F6F',
-              borderRadius: 8
+              borderRadius: 8,
+              width: '98%', // Max width for mobile
+              alignSelf: 'center',
             }}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#543310', marginBottom: 5 }}>Manual Position</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: '100%' }}>
+                <Text style={{ color: '#543310', marginBottom: 3, fontSize: 14 }}>Manual Position</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <Button
                     style={{ backgroundColor: manualMode ? '#543310' : '#74512D', padding: 8, minWidth: 80 }}
                     onPress={() => {
@@ -368,7 +411,7 @@ export default function Screen() {
                       return;
                     }
                     if (noteDot[2] === note) {
-                      setResultMessage("Correct!");
+                      setResultMessage("✅");
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
@@ -377,7 +420,7 @@ export default function Screen() {
                       setScore(score + 1);
                       setNumberOfPositions(numberOfPositions - 1);
                     } else {
-                      setResultMessage(`Wrong! Note was ${noteDot[2]}`);
+                      setResultMessage("❌");
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
@@ -440,33 +483,7 @@ export default function Screen() {
             {user?.email || 'N/A'}
           </Text>
           <Button
-            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
-            onPress={() => setScreen('menu')}
-          >
-            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
-          </Button>
-        </View>
-      </View>
-    );
-  }
-
-  // Default to menu
-  return (
-    <Menu
-      onCampaign={() => setScreen('campaign')}
-      onFreeMode={() => setScreen('free')}
-      onSettings={() => setScreen('settings')}
-      // Add a Profile button to the menu
-      extraButtons={
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-          <Button
-            style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
-            onPress={() => setScreen('profile')}
-          >
-            <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
-          </Button>
-          <Button
-            style={{ backgroundColor: "#74512D", padding: 12, borderRadius: 8, minWidth: 110 }}
+            style={{ backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
             onPress={() => {
               import('react-native').then(({ Alert }) => {
                 Alert.alert(
@@ -486,10 +503,63 @@ export default function Screen() {
               });
             }}
           >
-            <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Logout</Text>
+            <Text style={{ color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
+          </Button>
+          <Button
+            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            onPress={() => setScreen('menu')}
+          >
+            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
           </Button>
         </View>
-      }
-    />
-  );
-}
+      </View>
+    );
+  }
+
+      // Default to menu
+      return (
+        <Menu
+          onCampaign={() => setScreen('campaign')}
+          onFreeMode={() => setScreen('free')}
+          onSettings={() => setScreen('settings')}
+          // Add a Profile button to the menu
+          extraButtons={
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+              <Button
+                style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
+                onPress={() => setScreen('profile')}
+              >
+                <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
+              </Button>
+              <Button
+                style={{ backgroundColor: "#b22222", padding: 12, borderRadius: 8, minWidth: 110 }}
+                onPress={() => {
+                  import('react-native').then(({ Alert }) => {
+                    Alert.alert(
+                      'Exit',
+                      'Are you sure you want to exit the app?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Exit', style: 'destructive', onPress: () => {
+                            // On mobile, use BackHandler.exitApp(); on web, show a message
+                            import('react-native').then(({ BackHandler, Platform }) => {
+                              if (Platform.OS === 'android') {
+                                BackHandler.exitApp();
+                              } else {
+                                Alert.alert('Exit', 'Exit is only available on Android devices.');
+                              }
+                            });
+                          }
+                        },
+                      ]
+                    );
+                  });
+                }}
+              >
+                <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Exit</Text>
+              </Button>
+            </View>
+          }
+        />
+      );
+    }
