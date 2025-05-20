@@ -102,21 +102,35 @@ export default function Screen() {
   const [numberOfPositions, setNumberOfPositions] = React.useState(30)
   const [unlockedLevel, setUnlockedLevel] = React.useState(1);
   const [campaignMode, setCampaignMode] = React.useState(true)
+  const [selectedLevel, setSelectedLevel] = React.useState(1)
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
     setNumberOfPositions(30)
     setScore(0)
-  }
-React.useEffect(() => {
-  if (numberOfPositions === 0 && score > 27) {
-    setResultMessage(`Final Score: ${score}/30, New Level Unlocked`)
-    setUnlockedLevel(unlockedLevel + 1)
-  }else if (numberOfPositions === 0 && score < 27) {
-    setResultMessage(`Final Score: ${score}/30 Try again get least 27 points` )
+    setSelectedLevel(level)
   }
 
-}, [numberOfPositions]);
+React.useEffect(() => {
+  if (numberOfPositions === 0) {
+    const passed = score > 27
+    const baseMessage = `Final Score: ${score}/30`
+
+    if (passed) {
+      let message = baseMessage
+
+      if (selectedLevel === unlockedLevel) {
+        setUnlockedLevel(prev => prev + 1)
+        message += ` — You unlocked level ${unlockedLevel + 1}`
+      }
+
+      setResultMessage(message);
+    } else {
+      setResultMessage(`${baseMessage} — Try again to get at least 27 points`)
+    }
+  }
+}, [numberOfPositions])
+
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
