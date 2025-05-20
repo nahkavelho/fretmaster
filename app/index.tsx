@@ -440,13 +440,7 @@ export default function Screen() {
             {user?.email || 'N/A'}
           </Text>
           <Button
-            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
-            onPress={() => setScreen('menu')}
-          >
-            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
-          </Button>
-          <Button
-            style={{ backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            style={{ backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
             onPress={() => {
               import('react-native').then(({ Alert }) => {
                 Alert.alert(
@@ -467,6 +461,12 @@ export default function Screen() {
             }}
           >
             <Text style={{ color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
+          </Button>
+          <Button
+            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            onPress={() => setScreen('menu')}
+          >
+            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
           </Button>
         </View>
       </View>
