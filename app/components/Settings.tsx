@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Switch } from "react-native";
+import { View, Text, StyleSheet, Switch, ScrollView } from "react-native";
 import Button from "../../components/ui/button";
 
 interface SettingsProps {
@@ -61,7 +61,11 @@ const styles = StyleSheet.create({
   }
 });
 
+import { useWindowDimensions } from 'react-native';
+
 const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, difficulty, setDifficulty  }) => {
+  const dims = useWindowDimensions();
+  const isLandscape = dims.width > dims.height;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
@@ -89,23 +93,67 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
             How many positions are shown on the fretboard at once.
             0 is open string, 1 is first fret, etc.
           </Text>
-          <View style={{ flexDirection: "row", marginTop: 10 }}>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((level) => (
-              <Button
-                key={level}
-                onPress={() => setDifficulty(level)}
-                style={{
-                  marginHorizontal: 5,
-                  backgroundColor: difficulty === level ? "#74512D" : "#CCCCCC",
-                  padding: 10,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: "#F8F4E1" }}>
-                  {level}
-                </Text>
-              </Button>
-            ))}
+          <View style={{ marginTop: 12 }}>
+            {/* Responsive orientation: useWindowDimensions triggers re-render on change */}
+            {isLandscape ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'nowrap' }}>
+                {[...Array(13).keys()].map((level) => (
+                  <Button
+                    key={level}
+                    style={{
+                      backgroundColor: difficulty === level ? "#543310" : "#AF8F6F",
+                      marginHorizontal: 3,
+                      minWidth: 36,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                    }}
+                    onPress={() => setDifficulty(level)}
+                  >
+                    <Text style={{ color: "#F8F4E1", fontSize: 16 }}>{level}</Text>
+                  </Button>
+                ))}
+              </View>
+            ) : (
+              <>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6 }}>
+                  {[...Array(7).keys()].map((level) => (
+                    <Button
+                      key={level}
+                      style={{
+                        backgroundColor: difficulty === level ? "#543310" : "#AF8F6F",
+                        marginHorizontal: 3,
+                        minWidth: 36,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                      }}
+                      onPress={() => setDifficulty(level)}
+                    >
+                      <Text style={{ color: "#F8F4E1", fontSize: 16 }}>{level}</Text>
+                    </Button>
+                  ))}
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                  {[...Array(6).keys()].map((i) => {
+                    const level = i + 7;
+                    return (
+                      <Button
+                        key={level}
+                        style={{
+                          backgroundColor: difficulty === level ? "#543310" : "#AF8F6F",
+                          marginHorizontal: 3,
+                          minWidth: 36,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                        }}
+                        onPress={() => setDifficulty(level)}
+                      >
+                        <Text style={{ color: "#F8F4E1", fontSize: 16 }}>{level}</Text>
+                      </Button>
+                    );
+                  })}
+                </View>
+              </>
+            )}
           </View>
           <Text style={{ color: "#543310", fontSize: 14, marginTop: 4 }}>Current Difficulty: {difficulty}</Text>
         </View>

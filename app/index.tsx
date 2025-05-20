@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Animated } from 'react-native'
+import Icon from 'react-native-vector-icons/MaterialIcons'
 import * as ScreenOrientation from 'expo-screen-orientation'
 import "../app.css";
 import Fretboard from "./components/Fretboard";
@@ -84,6 +85,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+// Animated feedback component for result icon
+const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
+  const opacity = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (resultMessage) {
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 380,
+          delay: 620,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      opacity.setValue(0);
+    }
+  }, [resultMessage]);
+
+  if (!resultMessage) return null;
+  return (
+    <Animated.View style={{
+      position: 'absolute',
+      top: '45%',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 100,
+      opacity,
+      pointerEvents: 'none',
+    }}>
+      {resultMessage === '✅' ? (
+        <View style={{
+          backgroundColor: 'rgba(58,125,58,0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Icon name="check" size={56} color="#00C853" />
+        </View>
+      ) : resultMessage === '❌' ? (
+        <View style={{
+          backgroundColor: 'rgba(178,34,34,0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
+        </View>
+      ) : null}
+    </Animated.View>
+  );
+};
 
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
@@ -189,42 +249,25 @@ export default function Screen() {
             </Text>
           </View>
           {/* Overlay result message in the middle of the screen */}
-          {resultMessage && (
-            <View style={{ position: 'absolute', top: '45%', left: 0, right: 0, alignItems: 'center', zIndex: 100 }} pointerEvents="none">
-              <Text style={{
-                fontSize: 36,
-                fontWeight: 'bold',
-                color: resultMessage.includes('Correct') ? '#3a7d3a' : '#b22222',
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                paddingHorizontal: 32,
-                paddingVertical: 16,
-                borderRadius: 18,
-                overflow: 'hidden',
-                shadowColor: '#000',
-                shadowOpacity: 0.18,
-                shadowRadius: 10,
-                elevation: 6,
-                textAlign: 'center',
-              }}>
-                {resultMessage}
-              </Text>
-            </View>
-          )}
+          {/* Animated feedback icon */}
+          <AnimatedFeedback resultMessage={resultMessage} />
           {/* UI for manual dot positioning */}
           {manualMode && (
-            <View style={{ 
-              flexDirection: 'row',
+            <View style={{
+              flexDirection: 'column', // Stack vertically for better fit
               justifyContent: 'center',
               alignItems: 'center',
-              marginVertical: 10,
-              gap: 10,
-              padding: 10,
+              marginVertical: 6,
+              gap: 6,
+              padding: 6,
               backgroundColor: '#AF8F6F',
-              borderRadius: 8
+              borderRadius: 8,
+              width: '98%', // Max width for mobile
+              alignSelf: 'center',
             }}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#543310', marginBottom: 5 }}>Manual Position</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', width: '100%' }}>
+                <Text style={{ color: '#543310', marginBottom: 3, fontSize: 14 }}>Manual Position</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <Button
                     style={{ backgroundColor: manualMode ? '#543310' : '#74512D', padding: 8, minWidth: 80 }}
                     onPress={() => {
@@ -368,7 +411,7 @@ export default function Screen() {
                       return;
                     }
                     if (noteDot[2] === note) {
-                      setResultMessage("Correct!");
+                      setResultMessage("✅");
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
@@ -377,7 +420,7 @@ export default function Screen() {
                       setScore(score + 1);
                       setNumberOfPositions(numberOfPositions - 1);
                     } else {
-                      setResultMessage(`Wrong! Note was ${noteDot[2]}`);
+                      setResultMessage("❌");
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
