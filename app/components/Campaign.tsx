@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel  }) => (
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel}) => (
   <View style={styles.container}>
     <Text style={styles.title}>Campaign</Text>
     <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', marginTop: 32 }}>
