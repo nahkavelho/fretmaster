@@ -14,7 +14,9 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
         const marginPercent = 0.01; // Reduce margin for wider string spacing
         // Make the strings fully symmetrical: use N+1 gaps for N strings
         const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
-        const stringHeight = 2; // Use a constant string thickness for better alignment
+        // Make all strings thicker, decreasing stepwise from bottom (i==0) to top (i==5)
+        const stringHeights = [5, 3.5, 2.7, 2.2, 1.8, 1.4];
+        const stringHeight = stringHeights[i] || 1.4;
         // Place strings at (k / (strings.length + 1)) for k=1..N
         const renderedIndex = (strings.length - 1) - i;
         const gapCount = strings.length + 1;
@@ -29,6 +31,8 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight }) => {
               top,
               height: stringHeight,
               backgroundColor: '#C0C0C0', // all strings silver
+              // Optionally, you could make the bottom string a different color for more realism
+              // backgroundColor: i === 0 ? '#B0A160' : '#C0C0C0',
               shadowColor: '#543310', // deep brown shadow
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.4,
