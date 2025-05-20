@@ -445,28 +445,8 @@ export default function Screen() {
           >
             <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
           </Button>
-        </View>
-      </View>
-    );
-  }
-
-  // Default to menu
-  return (
-    <Menu
-      onCampaign={() => setScreen('campaign')}
-      onFreeMode={() => setScreen('free')}
-      onSettings={() => setScreen('settings')}
-      // Add a Profile button to the menu
-      extraButtons={
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
           <Button
-            style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
-            onPress={() => setScreen('profile')}
-          >
-            <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
-          </Button>
-          <Button
-            style={{ backgroundColor: "#74512D", padding: 12, borderRadius: 8, minWidth: 110 }}
+            style={{ backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
             onPress={() => {
               import('react-native').then(({ Alert }) => {
                 Alert.alert(
@@ -486,10 +466,57 @@ export default function Screen() {
               });
             }}
           >
-            <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Logout</Text>
+            <Text style={{ color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
           </Button>
         </View>
-      }
-    />
-  );
-}
+      </View>
+    );
+  }
+
+      // Default to menu
+      return (
+        <Menu
+          onCampaign={() => setScreen('campaign')}
+          onFreeMode={() => setScreen('free')}
+          onSettings={() => setScreen('settings')}
+          // Add a Profile button to the menu
+          extraButtons={
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+              <Button
+                style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
+                onPress={() => setScreen('profile')}
+              >
+                <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
+              </Button>
+              <Button
+                style={{ backgroundColor: "#b22222", padding: 12, borderRadius: 8, minWidth: 110 }}
+                onPress={() => {
+                  import('react-native').then(({ Alert }) => {
+                    Alert.alert(
+                      'Exit',
+                      'Are you sure you want to exit the app?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Exit', style: 'destructive', onPress: () => {
+                            // On mobile, use BackHandler.exitApp(); on web, show a message
+                            import('react-native').then(({ BackHandler, Platform }) => {
+                              if (Platform.OS === 'android') {
+                                BackHandler.exitApp();
+                              } else {
+                                Alert.alert('Exit', 'Exit is only available on Android devices.');
+                              }
+                            });
+                          }
+                        },
+                      ]
+                    );
+                  });
+                }}
+              >
+                <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Exit</Text>
+              </Button>
+            </View>
+          }
+        />
+      );
+    }
