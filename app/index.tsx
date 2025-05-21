@@ -182,7 +182,7 @@ export default function Screen() {
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
-    setNumberOfPositions(5)
+    setNumberOfPositions(30)
     setScore(0)
     setSelectedLevel(level)
   }
