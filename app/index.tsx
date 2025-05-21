@@ -14,10 +14,6 @@ import { onAuthStateChanged, Auth } from "firebase/auth";
 import { auth } from "../firebase";
 import Settings from "./components/Settings";
 
-interface ScoreProp {
-  score: number
-  numberOfPositions: number
-}
 export const screenOptions = {
   headerShown: false,
 }
@@ -25,7 +21,6 @@ const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const strings = [1, 2, 3, 4, 5, 6]
 const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
 // Force light mode for the app
-const forcedColorScheme = 'light'
 
 const styles = StyleSheet.create({
   root: {
@@ -89,26 +84,31 @@ const styles = StyleSheet.create({
 // Animated feedback component for result icon
 const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
   const opacity = React.useRef(new Animated.Value(0)).current;
+  const textOpacity = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    if (resultMessage) {
+    if ("✅" === resultMessage || "❌" === resultMessage) {
       Animated.sequence([
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 120,
+          duration: 12,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0,
           duration: 380,
-          delay: 620,
+          delay: 62000,
           useNativeDriver: true,
         }),
       ]).start();
     } else {
-      opacity.setValue(0);
+      Animated.timing( textOpacity, {
+        toValue: 1,
+        delay: 100,
+        useNativeDriver: true,
+      }).start()   
     }
-  }, [resultMessage]);
+  }, [resultMessage])
 
   if (!resultMessage) return null;
   return (
@@ -138,18 +138,28 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
+          
           <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
         </View>
-      ) : null}
+      ) : resultMessage ? (
+        <View style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: 'red', textAlign: 'center' }}>{resultMessage}</Text>
+        </View>
+      ) 
+      : null }
     </Animated.View>
-  );
-};
+  )
+}
 
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [authChecked, setAuthChecked] = React.useState(false);
   const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
-
   // Free mode state (always defined, only used when in free mode)
   const [difficulty, setDifficulty] = React.useState(0);
   const [fretboardHeight, setFretboardHeight] = React.useState(140);
@@ -165,22 +175,47 @@ export default function Screen() {
   );
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
-  const [numberOfPositions, setNumberOfPositions] = React.useState(30);
+  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
+  const [unlockedLevel, setUnlockedLevel] = React.useState(1);
+  const [campaignMode, setCampaignMode] = React.useState(true)
+  const [selectedLevel, setSelectedLevel] = React.useState(1)
+  const SetLevel = (level: number) => {
+    setDifficulty(level - 1);
+    setScreen('free');
+    setNumberOfPositions(30)
+    setScore(0)
+    setSelectedLevel(level)
+  }
+
+React.useEffect(() => {
+  if (numberOfPositions === 0) {
+    const passed = score > 27
+    const baseMessage = `Final Score: ${score}/30`
+
+    if (passed) {
+      let message = baseMessage
+
+      if (selectedLevel === unlockedLevel) {
+        setUnlockedLevel(prev => prev + 1)
+        message += ` — You unlocked level ${unlockedLevel + 1}`
+      }
+
+      setResultMessage(message);
+    } else {
+      setResultMessage(`${baseMessage} — Try again to get at least 27 points`)
+    }
+  }
+}, [numberOfPositions])
+
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
-      setLoggedIn(!!user);
+      setLoggedIn(!!user)
       setAuthChecked(true);
-    });
-    return unsubscribe;
-  }, []);
+    })
+    return unsubscribe
+  }, [])
 
-  React.useEffect(() => {
-    if (resultMessage) {
-      const timeout = setTimeout(() => setResultMessage(null), 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [resultMessage]);
 
   if (!authChecked) {
     // Optionally show a loading spinner here
@@ -191,8 +226,18 @@ export default function Screen() {
     return <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
-  if (screen === 'campaign') {
-    return <Campaign onBack={() => setScreen('menu')} />;
+  if (screen === 'campaign'){
+    return (
+      <Campaign
+        onBack={() => {
+          setScreen('menu')
+          setNumberOfPositions(30)
+          setScore(0)
+        }}
+        onLevelSelect={SetLevel}
+        unlockedLevel={unlockedLevel}
+      />
+    );
   }
 
   if (screen === 'settings') {
@@ -213,17 +258,30 @@ export default function Screen() {
         <View style={styles.fretboardContainer}>
           {/* Floating Menu/Reset Buttons - Top Left */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
-            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => setScreen('menu')}>
-              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Menu"}</Text>
-            </Button>
-            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
+            {campaignMode && (
+            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => setScreen('campaign')}>
+              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>Menu</Text>
+            </Button>   
+            )}
+            {!campaignMode && (
+              <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
+                setScreen('menu');
+                setNumberOfPositions(30);
+                setScore(0);
+              }}
+              >
+                <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>Menu</Text>
+              </Button>
+            )}
+            {!campaignMode && (
+              <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
               setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
-              setResultMessage(null);
               setScore(0);
-              setNumberOfPositions(5);
+              setNumberOfPositions(30);
             }}>
               <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
             </Button>
+            )}
           </View>
           {/* Score display in top right corner */}
           <View style={{ 
@@ -384,8 +442,8 @@ export default function Screen() {
                     style={{ backgroundColor: '#74512D', padding: 8 }}
                     onPress={() => {
                       const newOffset = horizontalOffset + 2; // Move right by 2px
-                      setHorizontalOffset(newOffset);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset));
+                      setHorizontalOffset(newOffset)
+                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset))
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>→</Text>
@@ -404,12 +462,9 @@ export default function Screen() {
             <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' }}>
               {NOTE_NAMES.map(note => (
                 <Button
+                  disabled={numberOfPositions === 0}
                   key={note}
                   onPress={() => {
-                    if (numberOfPositions === 0) {
-                      setResultMessage("No more notes to guess, final score: 0 /" + score);
-                      return;
-                    }
                     if (noteDot[2] === note) {
                       setResultMessage("✅");
                       setNoteDot(
@@ -519,8 +574,14 @@ export default function Screen() {
       // Default to menu
       return (
         <Menu
-          onCampaign={() => setScreen('campaign')}
-          onFreeMode={() => setScreen('free')}
+          onCampaign={() => {
+        setScreen('campaign');
+        setCampaignMode(true);
+      }}
+          onFreeMode={() => { 
+        setScreen('free')
+        setCampaignMode(false);
+      }}
           onSettings={() => setScreen('settings')}
           // Add a Profile button to the menu
           extraButtons={

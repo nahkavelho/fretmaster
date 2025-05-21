@@ -4,7 +4,9 @@ import Button from "../../components/ui/button";
 import { FontAwesome5 } from '@expo/vector-icons';
 
 interface CampaignProps {
-  onBack: () => void;
+  onBack: () => void
+  onLevelSelect: (level: number) => void
+  unlockedLevel: number
 }
 
 const LEVEL_COUNT = 4;
@@ -52,14 +54,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const Campaign: React.FC<CampaignProps> = ({ onBack }) => (
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel}) => (
   <View style={styles.container}>
     <Text style={styles.title}>Campaign</Text>
     <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', marginTop: 32 }}>
       {QUESTS.map((quest, idx) => (
-        <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }] }>
+        <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
           <TouchableOpacity
-            onPress={() => {/* TODO: Quest select logic */}}
+            disabled={quest.id > unlockedLevel}
+            onPress={() => { onLevelSelect(quest.id); }}
             activeOpacity={0.8}
             style={{ padding: 8 }}
           >
