@@ -84,26 +84,31 @@ const styles = StyleSheet.create({
 // Animated feedback component for result icon
 const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
   const opacity = React.useRef(new Animated.Value(0)).current;
+  const textOpacity = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    if (resultMessage) {
+    if ("✅" === resultMessage || "❌" === resultMessage) {
       Animated.sequence([
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 120,
+          duration: 12,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0,
           duration: 380,
-          delay: 620,
+          delay: 62000,
           useNativeDriver: true,
         }),
       ]).start();
     } else {
-      opacity.setValue(0);
+      Animated.timing( textOpacity, {
+        toValue: 1,
+        delay: 100,
+        useNativeDriver: true,
+      }).start()   
     }
-  }, [resultMessage]);
+  }, [resultMessage])
 
   if (!resultMessage) return null;
   return (
@@ -133,12 +138,23 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
+          
           <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
         </View>
-      ) : null}
+      ) : resultMessage ? (
+        <View style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.07)',
+          borderRadius: 999,
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+        }}>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: 'red', textAlign: 'center' }}>{resultMessage}</Text>
+        </View>
+      ) 
+      : null }
     </Animated.View>
-  );
-};
+  )
+}
 
 export default function Screen() {
   const [loggedIn, setLoggedIn] = React.useState(false);
@@ -166,7 +182,7 @@ export default function Screen() {
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
-    setNumberOfPositions(30)
+    setNumberOfPositions(5)
     setScore(0)
     setSelectedLevel(level)
   }
@@ -194,21 +210,12 @@ React.useEffect(() => {
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
-      setLoggedIn(!!user);
+      setLoggedIn(!!user)
       setAuthChecked(true);
-    });
-    return unsubscribe;
-  }, []);
+    })
+    return unsubscribe
+  }, [])
 
-  React.useEffect(() => {
-    const time = numberOfPositions === 0 ? 5000 : 1000
-    
-    if (resultMessage) {
-      const timeout = setTimeout(() => setResultMessage(null), time);
-      return () => clearTimeout(timeout);
-    }
-
-  }, [resultMessage]);
 
   if (!authChecked) {
     // Optionally show a loading spinner here
