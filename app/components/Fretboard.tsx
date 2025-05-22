@@ -43,8 +43,8 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, 
       {/* Random note dots */}
       <DrawNoteDot noteDot={noteDot} />
     </View>
-  );
-};
+  )
+}
 
 const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
   return (
@@ -63,7 +63,7 @@ const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
       }}
     >
     </View>
-  );
-};
+  )
+}
 
 export default Fretboard
