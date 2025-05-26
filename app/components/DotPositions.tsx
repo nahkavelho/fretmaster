@@ -1,4 +1,5 @@
-type NoteDot = [number, number, string, number, number];
+
+type NoteDot = [x: number, y: number, note: string, stringIndex: number, fretIndex: number];
 type Note = string;
 // Each of the 6 strings has 13 notes (0-12 frets, where 0 is the open string)
 
@@ -110,10 +111,10 @@ function GenDotList(
   manualString?: number,
   manualFret?: number,
   verticalOffset: number = 0,
-  
+  fullList?: boolean 
 ) {
   // If manual position is specified, use that instead of random
-  if (manualString !== undefined && manualFret !== undefined) {
+  if (manualString !== undefined && manualFret !== undefined ) {
     return ManualDotPosition(fretboardHeight, numStrings, manualString, manualFret, verticalOffset);
   }
 
@@ -176,10 +177,15 @@ function GenDotList(
 
     return [x, y, note, stringIndex, fretIndex]
   });
-  const randomIndex = Math.floor(Math.random() * dotCoordinates.length);
-  return dotCoordinates[randomIndex] as NoteDot;
+
+  if (fullList) {
+    return dotCoordinates as any
+  }
+    return dotCoordinates[Math.floor(Math.random() * dotCoordinates.length)] as NoteDot
+
 }
 
-export default GenDotList;
-export { ManualDotPosition };
-export type { NoteDot };
+export default GenDotList
+export { ManualDotPosition }
+export type { NoteDot }
+export type { Note }

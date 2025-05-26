@@ -13,6 +13,7 @@ import LoginScreen from '../LoginScreen';
 import { onAuthStateChanged, Auth } from "firebase/auth";
 import { auth } from "../firebase";
 import Settings from "./components/Settings";
+import {Note} from "./components/DotPositions";
 
 export const screenOptions = {
   headerShown: false,
@@ -172,13 +173,14 @@ export default function Screen() {
     manualMode 
       ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
       : GenDotList(fretboardHeight, strings.length, difficulty)
-  );
+  )
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [score, setScore] = React.useState(0);
   const [numberOfPositions, setNumberOfPositions] = React.useState(30)
   const [unlockedLevel, setUnlockedLevel] = React.useState(1);
   const [campaignMode, setCampaignMode] = React.useState(true)
   const [selectedLevel, setSelectedLevel] = React.useState(1)
+  const [fullList, setFullList] = React.useState(true)
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -187,6 +189,30 @@ export default function Screen() {
     setSelectedLevel(level)
   }
 
+const NOTE_NAMES = (
+  () => {
+    const arr = GenDotList(
+      fretboardHeight,
+      strings.length,
+      difficulty,
+      undefined,
+      undefined,
+      verticalOffset,
+      fullList
+    )
+      .map((note: Note) => note[2])
+      .filter((value : string, index : number, self : string[]) => self.indexOf(value) === index);
+
+    
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+
+    return arr
+  }
+)()
+  
 React.useEffect(() => {
   if (numberOfPositions === 0) {
     const passed = score > 27
@@ -206,7 +232,6 @@ React.useEffect(() => {
     }
   }
 }, [numberOfPositions])
-
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
