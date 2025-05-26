@@ -97,7 +97,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
         Animated.timing(opacity, {
           toValue: 0,
           duration: 380,
-          delay: 62000,
+          delay: 100,
           useNativeDriver: true,
         }),
       ]).start();
