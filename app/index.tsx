@@ -175,12 +175,16 @@ export default function Screen() {
       : GenDotList(fretboardHeight, strings.length, difficulty)
   )
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
+  const [lastCorrectNote, setLastCorrectNote] = React.useState<string | null>(null);
+  const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const [score, setScore] = React.useState(0);
   const [numberOfPositions, setNumberOfPositions] = React.useState(30)
   const [unlockedLevel, setUnlockedLevel] = React.useState(1);
   const [campaignMode, setCampaignMode] = React.useState(true)
   const [selectedLevel, setSelectedLevel] = React.useState(1)
   const [fullList, setFullList] = React.useState(true)
+  const [lastIncorrectNote, setLastIncorrectNote] = React.useState<string | null>(null);
+  const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const SetLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -204,11 +208,6 @@ const NOTE_NAMES = (
       .filter((value : string, index : number, self : string[]) => self.indexOf(value) === index);
 
     
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]]
-    }
-
     return arr
   }
 )()
@@ -232,6 +231,8 @@ React.useEffect(() => {
     }
   }
 }, [numberOfPositions])
+
+
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
@@ -278,9 +279,70 @@ React.useEffect(() => {
   }
 
   if (screen === 'free') {
+    const gameOver = numberOfPositions === 0;
+    // Custom message based on score
+    let performanceMsg = '';
+    if (gameOver) {
+      if (score === 30) performanceMsg = 'Perfect! You got every note right!';
+      else if (score >= 27) performanceMsg = 'Excellent! You really know your fretboard.';
+      else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
+      else performanceMsg = 'Keep practicing! You can do it!';
+    }
     return (
       <View style={styles.root}>
         <View style={styles.fretboardContainer}>
+          {/* Result Box Modal */}
+          {gameOver && (
+            <View style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.45)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 999,
+            }}>
+              <View style={{
+                backgroundColor: '#fffbe8',
+                borderRadius: 24,
+                padding: 32,
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOpacity: 0.13,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 8,
+                minWidth: 280,
+                maxWidth: 340,
+              }}>
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#543310', marginBottom: 10 }}>Game Over</Text>
+                <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
+                <Text style={{ fontSize: 18, color: '#543310', marginBottom: 20, textAlign: 'center' }}>{performanceMsg}</Text>
+                <Button
+                  style={{ backgroundColor: '#2ecc40', padding: 14, borderRadius: 12, width: 180, marginTop: 4, marginBottom: 10 }}
+                  onPress={() => {
+                    setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
+                    setScore(0);
+                    setNumberOfPositions(30);
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>Play Again</Text>
+                </Button>
+                <Button
+                  style={{ backgroundColor: '#AF8F6F', padding: 14, borderRadius: 12, width: 180, marginTop: 6 }}
+                  onPress={() => {
+                    setScreen('menu');
+                    setScore(0);
+                    setNumberOfPositions(30);
+                  }}
+                >
+                  <Text style={{ color: '#543310', fontWeight: 'bold', fontSize: 18 }}>Back to Menu</Text>
+                </Button>
+              </View>
+            </View>
+          )}
           {/* Floating Menu/Reset Buttons - Top Left */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
             {campaignMode && (
@@ -490,6 +552,9 @@ React.useEffect(() => {
                   disabled={numberOfPositions === 0}
                   key={note}
                   onPress={() => {
+                    setLastCorrectNote(noteDot[2]); // Always highlight the correct answer
+                    if (lastCorrectTimeout.current) clearTimeout(lastCorrectTimeout.current);
+                    lastCorrectTimeout.current = setTimeout(() => setLastCorrectNote(null), 500);
                     if (noteDot[2] === note) {
                       setResultMessage("✅");
                       setNoteDot(
@@ -500,6 +565,9 @@ React.useEffect(() => {
                       setScore(score + 1);
                       setNumberOfPositions(numberOfPositions - 1);
                     } else {
+                      setLastIncorrectNote(note); // Highlight incorrect note
+                      if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
+                      lastIncorrectTimeout.current = setTimeout(() => setLastIncorrectNote(null), 500);
                       setResultMessage("❌");
                       setNoteDot(
                         manualMode 
@@ -509,7 +577,11 @@ React.useEffect(() => {
                       setNumberOfPositions(numberOfPositions - 1);
                     }
                   }}
-                  style={styles.noteButton}
+                  style={[
+                    styles.noteButton,
+                    lastCorrectNote === note ? { backgroundColor: '#2ecc40', borderWidth: 2, borderColor: '#145a1f' } : null,
+                    lastIncorrectNote === note ? { backgroundColor: '#ff5555', borderWidth: 2, borderColor: '#a10000' } : null
+                  ]}
                 >
                   <Text style={styles.noteButtonText}>{note}</Text>
                 </Button>
