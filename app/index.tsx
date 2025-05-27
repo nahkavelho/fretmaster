@@ -180,15 +180,15 @@ export default function Screen() {
   }
 
   const ManageResultMessage = (message: string) => {
-    setResultMessage(message);
+    setResultMessage(message)
     if (message === '✅') {
       lastCorrectTimeout.current = setTimeout(() => {
-        setResultMessage(null);
-      }, 500);
+        setResultMessage(null)
+      }, 380)
     } else if (message === '❌') {
       lastIncorrectTimeout.current = setTimeout(() => {
-        setResultMessage(null);
-      }, 500);
+        setResultMessage(null)
+      }, 380)
     }
   }
 
