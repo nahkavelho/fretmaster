@@ -1,7 +1,5 @@
 import * as React from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
-import Icon from 'react-native-vector-icons/MaterialIcons'
-import * as ScreenOrientation from 'expo-screen-orientation'
 import "../app.css";
 import Fretboard from "./components/Fretboard";
 import Button from "../components/ui/button";
@@ -20,7 +18,6 @@ export const screenOptions = {
 }
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const strings = [1, 2, 3, 4, 5, 6]
-const NOTE_NAMES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
 // Force light mode for the app
 
 const styles = StyleSheet.create({
@@ -80,12 +77,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-});
+})
 
 // Animated feedback component for result icon
 const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
-  const opacity = React.useRef(new Animated.Value(0)).current;
-  const textOpacity = React.useRef(new Animated.Value(0)).current;
+  const opacity = React.useRef(new Animated.Value(0)).current
 
   React.useEffect(() => {
     if ("✅" === resultMessage || "❌" === resultMessage) {
@@ -103,7 +99,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
         }),
       ]).start();
     } else {
-      Animated.timing( textOpacity, {
+      Animated.timing( opacity, {
         toValue: 1,
         delay: 100,
         useNativeDriver: true,
@@ -111,7 +107,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
     }
   }, [resultMessage])
 
-  if (!resultMessage) return null;
+  if (resultMessage) 
   return (
     <Animated.View style={{
       position: 'absolute',
@@ -130,7 +126,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
-          <Icon name="check" size={56} color="#00C853" />
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#2E7D2E', textAlign: 'center' }}>✓</Text>
         </View>
       ) : resultMessage === '❌' ? (
         <View style={{
@@ -139,22 +135,12 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
-          
           <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
         </View>
-      ) : resultMessage ? (
-        <View style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.07)',
-          borderRadius: 999,
-          paddingHorizontal: 28,
-          paddingVertical: 14,
-        }}>
-          <Text style={{ fontSize: 56, fontWeight: 'bold', color: 'red', textAlign: 'center' }}>{resultMessage}</Text>
-        </View>
-      ) 
-      : null }
+      ) : null }
     </Animated.View>
   )
+  return null
 }
 
 export default function Screen() {
@@ -193,6 +179,19 @@ export default function Screen() {
     setSelectedLevel(level)
   }
 
+  const ManageResultMessage = (message: string) => {
+    setResultMessage(message);
+    if (message === '✅') {
+      lastCorrectTimeout.current = setTimeout(() => {
+        setResultMessage(null);
+      }, 500);
+    } else if (message === '❌') {
+      lastIncorrectTimeout.current = setTimeout(() => {
+        setResultMessage(null);
+      }, 500);
+    }
+  }
+
 const NOTE_NAMES = (
   () => {
     const arr = GenDotList(
@@ -205,35 +204,11 @@ const NOTE_NAMES = (
       fullList
     )
       .map((note: Note) => note[2])
-      .filter((value : string, index : number, self : string[]) => self.indexOf(value) === index);
+      .filter((value : string, index : number, self : string[]) => self.indexOf(value) === index)
 
-    
     return arr
   }
 )()
-  
-React.useEffect(() => {
-  if (numberOfPositions === 0) {
-    const passed = score > 27
-    const baseMessage = `Final Score: ${score}/30`
-
-    if (passed) {
-      let message = baseMessage
-
-      if (selectedLevel === unlockedLevel) {
-        setUnlockedLevel(prev => prev + 1)
-        message += ` — You unlocked level ${unlockedLevel + 1}`
-      }
-
-      setResultMessage(message);
-    } else {
-      setResultMessage(`${baseMessage} — Try again to get at least 27 points`)
-    }
-  }
-}, [numberOfPositions])
-
-
-
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
       setLoggedIn(!!user)
@@ -242,10 +217,9 @@ React.useEffect(() => {
     return unsubscribe
   }, [])
 
-
   if (!authChecked) {
     // Optionally show a loading spinner here
-    return null;
+    return null
   }
 
   if (!loggedIn) {
@@ -275,18 +249,18 @@ React.useEffect(() => {
         difficulty={difficulty}
         setDifficulty={setDifficulty}
       />
-    );
+    )
   }
 
   if (screen === 'free') {
     const gameOver = numberOfPositions === 0;
     // Custom message based on score
-    let performanceMsg = '';
+    let performanceMsg = ''
     if (gameOver) {
-      if (score === 30) performanceMsg = 'Perfect! You got every note right!';
-      else if (score >= 27) performanceMsg = 'Excellent! You really know your fretboard.';
-      else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
-      else performanceMsg = 'Keep practicing! You can do it!';
+      if (score === 30) performanceMsg = 'Perfect! You got every note right!'
+      else if (score >= 27) performanceMsg = 'Excellent! You really know your fretboard.'
+      else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.'
+      else performanceMsg = 'Keep practicing! You can do it!'
     }
     return (
       <View style={styles.root}>
@@ -490,7 +464,7 @@ React.useEffect(() => {
                   <Button
                     style={{ backgroundColor: '#74512D', padding: 8 }}
                     onPress={() => {
-                      const newOffset = verticalOffset - 2; // Move up by 2px
+                      const newOffset = verticalOffset - 2 // Move up by 2px
                       setVerticalOffset(newOffset);
                       setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
                     }}
@@ -547,7 +521,7 @@ React.useEffect(() => {
               </Text>
             </View>
             <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' }}>
-              {NOTE_NAMES.map(note => (
+              {NOTE_NAMES.map((note: string)  => (
                 <Button
                   disabled={numberOfPositions === 0}
                   key={note}
@@ -556,19 +530,19 @@ React.useEffect(() => {
                     if (lastCorrectTimeout.current) clearTimeout(lastCorrectTimeout.current);
                     lastCorrectTimeout.current = setTimeout(() => setLastCorrectNote(null), 500);
                     if (noteDot[2] === note) {
-                      setResultMessage("✅");
+                      ManageResultMessage("✅")
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
                           : GenDotList(fretboardHeight, strings.length, difficulty)
-                      );
-                      setScore(score + 1);
-                      setNumberOfPositions(numberOfPositions - 1);
+                      )
+                      setScore(score + 1)
+                      setNumberOfPositions(numberOfPositions - 1)
                     } else {
                       setLastIncorrectNote(note); // Highlight incorrect note
                       if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
                       lastIncorrectTimeout.current = setTimeout(() => setLastIncorrectNote(null), 500);
-                      setResultMessage("❌");
+                      ManageResultMessage("❌")
                       setNoteDot(
                         manualMode 
                           ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
