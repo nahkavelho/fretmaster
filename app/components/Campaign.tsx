@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import Button from "../../components/ui/button";
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -9,7 +9,7 @@ interface CampaignProps {
   unlockedLevel: number
 }
 
-const LEVEL_COUNT = 4;
+const LEVEL_COUNT = 12;
 const QUESTS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ id: i + 1, name: `Level ${i + 1}` }));
 
 const styles = StyleSheet.create({
@@ -54,10 +54,11 @@ const styles = StyleSheet.create({
   },
 });
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel}) => (
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => (
   <View style={styles.container}>
     <Text style={styles.title}>Campaign</Text>
-    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', marginTop: 32 }}>
+
+    <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ justifyContent: 'flex-start', alignItems: 'center', paddingTop: 32, paddingBottom: 32 }}>
       {QUESTS.map((quest, idx) => (
         <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
           <TouchableOpacity
@@ -71,7 +72,7 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
           <Text style={styles.questText}>{quest.name}</Text>
         </View>
       ))}
-    </View>
+    </ScrollView>
     <Button onPress={onBack} style={styles.backButton}>
       <Text style={styles.backButtonText}>Back to Menu</Text>
     </Button>
