@@ -229,11 +229,7 @@ const NOTE_NAMES = (
   if (screen === 'campaign'){
     return (
       <Campaign
-        onBack={() => {
-          setScreen('menu')
-          setNumberOfPositions(30)
-          setScore(0)
-        }}
+        onBack={() => setScreen('menu')}
         onLevelSelect={SetLevel}
         unlockedLevel={unlockedLevel}
       />
@@ -257,10 +253,18 @@ const NOTE_NAMES = (
     // Custom message based on score
     let performanceMsg = ''
     if (gameOver) {
-      if (score === 30) performanceMsg = 'Perfect! You got every note right!'
-      else if (score >= 27) performanceMsg = 'Excellent! You really know your fretboard.'
-      else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.'
-      else performanceMsg = 'Keep practicing! You can do it!'
+      if (score >= 30) {
+        performanceMsg = 'Perfect! You got every note right!';
+      }
+      else if (score >= 27) {
+        performanceMsg = 'Excellent! You really know your fretboard.';
+      }
+      else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
+      else performanceMsg = 'Keep practicing! You can do it!';
+      // Unlock next level if passed threshold (27)
+      if (score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 12) {
+        setUnlockedLevel(unlockedLevel + 1);
+      }
     }
     return (
       <View style={styles.root}>
@@ -294,6 +298,21 @@ const NOTE_NAMES = (
                 <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#543310', marginBottom: 10 }}>Game Over</Text>
                 <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
                 <Text style={{ fontSize: 18, color: '#543310', marginBottom: 20, textAlign: 'center' }}>{performanceMsg}</Text>
+                {score >= 27 && selectedLevel < 12 && (
+                  <Button
+                    style={{ backgroundColor: '#543310', padding: 14, borderRadius: 12, width: 180, marginBottom: 10 }}
+                    onPress={() => {
+                      // Aloita seuraava taso
+                      setDifficulty(selectedLevel); // seuraava level (index)
+                      setSelectedLevel(selectedLevel + 1);
+                      setNumberOfPositions(30);
+                      setScore(0);
+                      setNoteDot(GenDotList(fretboardHeight, strings.length, selectedLevel));
+                    }}
+                  >
+                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold', fontSize: 18 }}>Next Level</Text>
+                  </Button>
+                )}
                 <Button
                   style={{ backgroundColor: '#2ecc40', padding: 14, borderRadius: 12, width: 180, marginTop: 4, marginBottom: 10 }}
                   onPress={() => {
