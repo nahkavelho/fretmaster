@@ -4,6 +4,7 @@ import Button from "../../components/ui/button";
 import { FontAwesome5 } from '@expo/vector-icons';
 
 interface CampaignProps {
+  score: number;
   onBack: () => void
   onLevelSelect: (level: number) => void
   unlockedLevel: number
@@ -54,29 +55,37 @@ const styles = StyleSheet.create({
   },
 });
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Campaign</Text>
+import { ThemeContext } from '../_layout';
 
-    <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ justifyContent: 'flex-start', alignItems: 'center', paddingTop: 32, paddingBottom: 32 }}>
-      {QUESTS.map((quest, idx) => (
-        <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
-          <TouchableOpacity
-            disabled={quest.id > unlockedLevel}
-            onPress={() => { onLevelSelect(quest.id); }}
-            activeOpacity={0.8}
-            style={{ padding: 8 }}
-          >
-            <FontAwesome5 name="guitar" size={48} color="#543310" />
-          </TouchableOpacity>
-          <Text style={styles.questText}>{quest.name}</Text>
-        </View>
-      ))}
-    </ScrollView>
-    <Button onPress={onBack} style={styles.backButton}>
-      <Text style={styles.backButtonText}>Back to Menu</Text>
-    </Button>
-  </View>
-);
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
+  const { theme } = React.useContext(ThemeContext);
+  const bgColor = theme === 'rocksmith' ? '#181A1B' : '#F8F4E1';
+  const titleColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
+  const questTextColor = theme === 'rocksmith' ? '#FFD900' : '#74512D';
+  const iconColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
+  return (
+    <View style={[styles.container, { backgroundColor: bgColor }] }>
+      <Text style={[styles.title, { color: titleColor }]}>Campaign</Text>
+      <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ justifyContent: 'flex-start', alignItems: 'center', paddingTop: 32, paddingBottom: 32 }}>
+        {QUESTS.map((quest, idx) => (
+          <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
+            <TouchableOpacity
+              disabled={quest.id > unlockedLevel}
+              onPress={() => { onLevelSelect(quest.id); }}
+              activeOpacity={0.8}
+              style={{ padding: 8 }}
+            >
+              <FontAwesome5 name="guitar" size={48} color={iconColor} />
+            </TouchableOpacity>
+            <Text style={[styles.questText, { color: questTextColor }]}>{quest.name}</Text>
+          </View>
+        ))}
+      </ScrollView>
+      <Button onPress={onBack} style={{ marginTop: 16 }}>
+        <Text style={{ color: theme === 'rocksmith' ? '#FFD900' : '#543310', fontWeight: 'bold', fontSize: 18 }}>Back to Menu</Text>
+      </Button>
+    </View>
+  );
+};
 
 export default Campaign;

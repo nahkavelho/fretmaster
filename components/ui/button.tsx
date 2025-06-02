@@ -60,27 +60,51 @@ const buttonTextVariants = cva(
 type ButtonProps = React.ComponentPropsWithoutRef<typeof Pressable> &
   VariantProps<typeof buttonVariants>;
 
+import { ThemeContext } from '../../app/_layout';
+
 const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
-  ({ className, variant, size, children, ...props }, ref) => {
+  ({ className, variant, size, children, style, ...props }, ref) => {
+    const { theme } = React.useContext(ThemeContext);
+    let bgColor = '#AF8F6F'; // light default
+    let borderColor = '#543310';
+    let textColor = '#543310';
+    if (theme === 'rocksmith') {
+      bgColor = '#232526';
+      borderColor = '#FFD900'; // yellow accent
+      textColor = '#FFF';
+    } else if (theme === 'dark') {
+      bgColor = '#333';
+      borderColor = '#888';
+      textColor = '#FFF';
+    }
+    if (variant === 'destructive') {
+      borderColor = '#FF4B4B';
+      bgColor = theme === 'rocksmith' ? '#FF4B4B' : '#C00';
+      textColor = '#FFF';
+    }
     return (
-      <TextClassContext.Provider
-        value={cn(
-          props.disabled && 'web:pointer-events-none',
-          buttonTextVariants({ variant, size })
-        )}
+      <Pressable
+        ref={ref}
+        role='button'
+        style={[
+          {
+            backgroundColor: bgColor,
+            borderColor: borderColor,
+            borderWidth: 2,
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            alignItems: 'center',
+            opacity: props.disabled ? 0.5 : 1,
+          },
+          style,
+        ]}
+        {...props}
       >
-        <Pressable
-          className={cn(
-            props.disabled && 'opacity-50 web:pointer-events-none',
-            buttonVariants({ variant, size, className })
-          )}
-          ref={ref}
-          role='button'
-          {...props}
-        >
-          {typeof children === 'string' ? <Text>{children}</Text> : children}
-        </Pressable>
-      </TextClassContext.Provider>
+        {typeof children === 'string' ? (
+          <Text style={{ color: textColor, fontWeight: 'bold', fontSize: 18 }}>{children}</Text>
+        ) : children}
+      </Pressable>
     );
   }
 );

@@ -20,64 +20,100 @@ const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const strings = [1, 2, 3, 4, 5, 6]
 // Force light mode for the app
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#F8F4E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fretboardContainer: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: '#F8F4E1',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuButton: {
-    backgroundColor: '#AF8F6F',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 48,
-    alignSelf: 'center',
-    marginLeft: 50,
-    marginRight: 50,
-  },
-  menuButtonText: {
-    color: '#543310',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  answerBar: {
-    height: '20%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    padding: 24,
-    backgroundColor: '#AF8F6F',
-    width: '100%',
-  },
-  resultText: {
-    color: '#543310',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 6,
-  },
-  noteButton: {
-    margin: 4,
-    backgroundColor: '#74512D',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  noteButtonText: {
-    color: '#F8F4E1',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-})
+// Centralized UI sizing for all containers and buttons
+const UI_SIZES = {
+  answerBarHeight: '20%', // or e.g. 120 for px
+  answerBarPadding: 28,
+  answerBarGap: 8,
+  menuButtonPaddingHorizontal: 32,
+  menuButtonPaddingVertical: 16,
+  menuButtonBorderRadius: 12,
+  menuButtonMarginBottom: 48,
+  menuButtonMarginHorizontal: 50,
+  noteButtonMargin: 6,
+  noteButtonPaddingHorizontal: 22,
+  noteButtonPaddingVertical: 18,
+  noteButtonBorderRadius: 16,
+  noteButtonMinWidth: 56,
+  noteButtonMinHeight: 48,
+  noteButtonFontSize: 22,
+};
+
+function getStyles(theme: 'light' | 'dark' | 'rocksmith') {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: theme === 'rocksmith' ? '#181A1B' : '#F8F4E1',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    fretboardContainer: {
+      flex: 1,
+      width: '100%',
+      backgroundColor: theme === 'rocksmith' ? '#181A1B' : '#F8F4E1',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    menuButton: {
+      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
+      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+      borderWidth: theme === 'rocksmith' ? 2 : 0,
+      paddingHorizontal: UI_SIZES.menuButtonPaddingHorizontal,
+      paddingVertical: UI_SIZES.menuButtonPaddingVertical,
+      borderRadius: UI_SIZES.menuButtonBorderRadius,
+      marginBottom: UI_SIZES.menuButtonMarginBottom,
+      alignSelf: 'center',
+      marginLeft: UI_SIZES.menuButtonMarginHorizontal,
+      marginRight: UI_SIZES.menuButtonMarginHorizontal,
+    },
+    menuButtonText: {
+      color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+      fontSize: 18,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    answerBar: {
+      height: UI_SIZES.answerBarHeight,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: UI_SIZES.answerBarGap,
+      padding: UI_SIZES.answerBarPadding,
+      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
+      borderTopWidth: theme === 'rocksmith' ? 3 : 0,
+      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+      borderRadius: theme === 'rocksmith' ? 20 : 0,
+      shadowColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+      shadowOpacity: theme === 'rocksmith' ? 0.12 : 0,
+      shadowRadius: theme === 'rocksmith' ? 16 : 0,
+      shadowOffset: theme === 'rocksmith' ? { width: 0, height: 4 } : undefined,
+      elevation: theme === 'rocksmith' ? 8 : 0,
+      width: '100%',
+    },
+    resultText: {
+      color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+      fontWeight: 'bold',
+      fontSize: 16,
+      marginBottom: 6,
+    },
+    noteButton: {
+      margin: UI_SIZES.noteButtonMargin,
+      minWidth: UI_SIZES.noteButtonMinWidth,
+      minHeight: UI_SIZES.noteButtonMinHeight,
+      backgroundColor: theme === 'rocksmith' ? '#232526' : '#74512D',
+      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+      borderWidth: theme === 'rocksmith' ? 2 : 0,
+      borderRadius: UI_SIZES.noteButtonBorderRadius,
+      paddingHorizontal: UI_SIZES.noteButtonPaddingHorizontal,
+      paddingVertical: UI_SIZES.noteButtonPaddingVertical,
+    },
+    noteButtonText: {
+      color: theme === 'rocksmith' ? '#FFD900' : '#F8F4E1',
+      fontWeight: 'bold',
+      fontSize: UI_SIZES.noteButtonFontSize,
+    },
+  });
+}
+
 
 // Animated feedback component for result icon
 const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
@@ -143,7 +179,12 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
   return null
 }
 
+
+import { ThemeContext } from './_layout';
+
 export default function Screen() {
+  const { theme, setTheme } = React.useContext(ThemeContext);
+  const styles = getStyles(theme);
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [authChecked, setAuthChecked] = React.useState(false);
   const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
@@ -232,14 +273,15 @@ const NOTE_NAMES = (
         onBack={() => setScreen('menu')}
         onLevelSelect={SetLevel}
         unlockedLevel={unlockedLevel}
+        score={score}
       />
     );
   }
 
   if (screen === 'settings') {
     return (
-      <Settings 
-        onBack={() => setScreen('menu')} 
+      <Settings
+        onBack={() => setScreen('menu')}
         manualMode={manualMode}
         setManualMode={setManualMode}
         difficulty={difficulty}
@@ -268,7 +310,7 @@ const NOTE_NAMES = (
     }
     return (
       <View style={styles.root}>
-        <View style={styles.fretboardContainer}>
+        <View style={[styles.fretboardContainer, theme === 'rocksmith' && { backgroundColor: '#181A1B' }]}>
           {/* Result Box Modal */}
           {gameOver && (
             <View style={{
@@ -283,7 +325,7 @@ const NOTE_NAMES = (
               zIndex: 999,
             }}>
               <View style={{
-                backgroundColor: '#fffbe8',
+                backgroundColor: theme === 'rocksmith' ? '#232526' : '#fffbe8',
                 borderRadius: 24,
                 padding: 32,
                 alignItems: 'center',
@@ -295,12 +337,23 @@ const NOTE_NAMES = (
                 minWidth: 280,
                 maxWidth: 340,
               }}>
-                <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#543310', marginBottom: 10 }}>Game Over</Text>
-                <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
-                <Text style={{ fontSize: 18, color: '#543310', marginBottom: 20, textAlign: 'center' }}>{performanceMsg}</Text>
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 10 }}>Game Over</Text>
+                <Text style={{ fontSize: 26, fontWeight: 'bold', color: theme === 'rocksmith' ? '#FFD900' : '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
+                <Text style={{ fontSize: 18, color: theme === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 20, textAlign: 'center' }}>{performanceMsg}</Text>
                 {score >= 27 && selectedLevel < 12 && (
                   <Button
-                    style={{ backgroundColor: '#543310', padding: 14, borderRadius: 12, width: 180, marginBottom: 10 }}
+                    style={[
+                      {
+                        backgroundColor: theme === 'rocksmith' ? (score >= 27 ? '#FFD900' : '#232526') : '#543310',
+                        borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                        borderWidth: theme === 'rocksmith' ? 2 : 0,
+                        padding: 14,
+                        borderRadius: 12,
+                        width: 180,
+                        marginBottom: 10,
+                        alignItems: 'center',
+                      },
+                    ]}
                     onPress={() => {
                       // Aloita seuraava taso
                       setDifficulty(selectedLevel); // seuraava level (index)
@@ -310,28 +363,63 @@ const NOTE_NAMES = (
                       setNoteDot(GenDotList(fretboardHeight, strings.length, selectedLevel));
                     }}
                   >
-                    <Text style={{ color: '#F8F4E1', fontWeight: 'bold', fontSize: 18 }}>Next Level</Text>
+                    <Text style={{
+                      color: theme === 'rocksmith' ? (score >= 27 ? '#232526' : '#FFD900') : '#F8F4E1',
+                      fontWeight: 'bold',
+                      fontSize: 18,
+                    }}>Next Level</Text>
                   </Button>
                 )}
                 <Button
-                  style={{ backgroundColor: '#2ecc40', padding: 14, borderRadius: 12, width: 180, marginTop: 4, marginBottom: 10 }}
+                  style={[
+                    {
+                      backgroundColor: theme === 'rocksmith' ? '#232526' : '#2ecc40',
+                      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                      borderWidth: theme === 'rocksmith' ? 2 : 0,
+                      padding: 14,
+                      borderRadius: 12,
+                      width: 180,
+                      marginTop: 4,
+                      marginBottom: 10,
+                      alignItems: 'center',
+                    },
+                  ]}
                   onPress={() => {
                     setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
                     setScore(0);
                     setNumberOfPositions(30);
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>Play Again</Text>
+                  <Text style={{
+                    color: theme === 'rocksmith' ? '#FFD900' : '#fff',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                  }}>Play Again</Text>
                 </Button>
                 <Button
-                  style={{ backgroundColor: '#AF8F6F', padding: 14, borderRadius: 12, width: 180, marginTop: 6 }}
+                  style={[
+                    {
+                      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
+                      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                      borderWidth: theme === 'rocksmith' ? 2 : 0,
+                      padding: 14,
+                      borderRadius: 12,
+                      width: 180,
+                      marginTop: 6,
+                      alignItems: 'center',
+                    },
+                  ]}
                   onPress={() => {
                     setScreen('menu');
                     setScore(0);
                     setNumberOfPositions(30);
                   }}
                 >
-                  <Text style={{ color: '#543310', fontWeight: 'bold', fontSize: 18 }}>Back to Menu</Text>
+                  <Text style={{
+                    color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                  }}>Back to Menu</Text>
                 </Button>
               </View>
             </View>
@@ -339,28 +427,74 @@ const NOTE_NAMES = (
           {/* Floating Menu/Reset Buttons - Top Left */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
             {campaignMode && (
-            <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => setScreen('campaign')}>
-              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>Menu</Text>
-            </Button>   
-            )}
-            {!campaignMode && (
-              <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
-                setScreen('menu');
-                setNumberOfPositions(30);
-                setScore(0);
-              }}
+              <Button
+                style={[
+                  styles.menuButton,
+                  {
+                    minWidth: 80,
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    height: undefined,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                  },
+                ]}
+                onPress={() => setScreen('campaign')}
               >
-                <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>Menu</Text>
+                <Text
+                  style={[
+                    styles.menuButtonText,
+                    {
+                      fontSize: 16,
+                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  Menu
+                </Text>
               </Button>
             )}
             {!campaignMode && (
-              <Button style={[styles.menuButton, { minWidth: 80, paddingVertical: 6, paddingHorizontal: 12, height: undefined, alignItems: 'center', justifyContent: 'center' }]} onPress={() => {
-              setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
-              setScore(0);
-              setNumberOfPositions(30);
-            }}>
-              <Text style={[styles.menuButtonText, { fontSize: 16 }]} numberOfLines={1} adjustsFontSizeToFit>{"Reset"}</Text>
-            </Button>
+              <Button
+                style={[
+                  styles.menuButton,
+                  {
+                    minWidth: 80,
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    height: undefined,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                  },
+                ]}
+                onPress={() => {
+                  setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
+                  setScore(0);
+                  setNumberOfPositions(30);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.menuButtonText,
+                    {
+                      fontSize: 16,
+                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  Reset
+                </Text>
+              </Button>
             )}
           </View>
           {/* Score display in top right corner */}
@@ -368,23 +502,22 @@ const NOTE_NAMES = (
             position: 'absolute', 
             top: 10, 
             right: 10, 
-            backgroundColor: '#74512D',
+            backgroundColor: theme === 'rocksmith' ? '#232526' : '#74512D',
             paddingVertical: 6,
             paddingHorizontal: 12,
             borderRadius: 8,
-            borderWidth: 1,
-            borderColor: '#543310',
+            borderWidth: theme === 'rocksmith' ? 2 : 1,
+            borderColor: theme === 'rocksmith' ? '#FFD900' : '#543310',
             flexDirection: 'row',
             alignItems: 'center',
             zIndex: 20
           }}>
             <Text style={{ 
-              color: "#F8F4E1", 
-              fontWeight: "bold", 
-              fontSize: 14 
-            }}>
-              Score: {score}/{30}
-            </Text>
+              color: theme === 'rocksmith' ? '#FFD900' : "#F8F4E1", 
+              fontWeight: 'bold', 
+              fontSize: 18, 
+              marginRight: 8, 
+            }}>Score: {score}/30</Text>
           </View>
           {/* Overlay result message in the middle of the screen */}
           {/* Animated feedback icon */}
@@ -583,7 +716,14 @@ const NOTE_NAMES = (
           </View>
           {/* Fretboard, slightly bigger height for better fit */}
           <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 40, marginBottom: 20 }}>
-            <Fretboard frets={frets} strings={strings} fretboardHeight={170} noteDot={noteDot} difficulty={difficulty} />
+            <Fretboard
+              frets={frets}
+              strings={strings}
+              fretboardHeight={fretboardHeight}
+              noteDot={noteDot}
+              difficulty={difficulty}
+             
+            />
           </View>
         </View>
       </View>

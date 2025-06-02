@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View } from "react-native";
+import { ThemeContext } from '../_layout';
 
 interface FretDotsProps {
   frets: number[];
@@ -11,6 +12,7 @@ const dotFrets = [3, 5, 7, 9];
 const doubleDotFrets = [12];
 
 const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
+  const { theme } = useContext(ThemeContext);
   const dotSize = 16; // Smaller dot size for more realistic fretboard dots
   // Use the same symmetrical gap logic as strings for vertical centering
   const marginPercent = 0.01;
@@ -69,7 +71,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
               width: dotSize,
               height: dotSize,
               borderRadius: dotSize / 2,
-              backgroundColor: '#333',
+              backgroundColor: theme === 'rocksmith' ? '#FFD900' : theme === 'dark' ? '#FFF' : '#333',
             }}
           />
         );

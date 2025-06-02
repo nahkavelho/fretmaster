@@ -23,19 +23,24 @@ const BORDER = '#AF8F6F'; // tan border
 // area that is not in use by dufficulties
 const UNUSED_AREA_COLOR = '#C0C0C0';
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty}) => {
+import { ThemeContext } from '../_layout';
+
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty }) => {
+  const { theme } = React.useContext(ThemeContext);
 
     const max_difficulty = 12;
     const screenWidth = Dimensions.get('window').width;
     const percent = Math.min(100, Math.max(0, (difficulty / max_difficulty) * 100));
     const usedWidth = (percent / 100) * screenWidth;
-    
+    const bgColor = theme === 'rocksmith' ? '#181A1B' : UNUSED_AREA_COLOR;
+    const borderColor = theme === 'rocksmith' ? '#444' : BORDER;
+    const nutColor = theme === 'rocksmith' ? '#232526' : BROWN_BG;
   return (
-    <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: UNUSED_AREA_COLOR, borderRadius: 16, borderWidth: 4, borderColor: BORDER }}>
+    <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: bgColor, borderRadius: 16, borderWidth: 4, borderColor: borderColor }}>
       {/* Guitar Nut (white bar at the left edge) */}
-      <View style={{ position: 'absolute', left: 0, top: 0, width: usedWidth, height: fretboardHeight, backgroundColor: BROWN_BG }} />
+      <View style={{ position: 'absolute', left: 0, top: 0, width: usedWidth, height: fretboardHeight, backgroundColor: nutColor }} />
       {/* Strings (horizontal lines) */}
-      <Strings strings={strings} fretboardHeight={fretboardHeight} />
+      <Strings strings={strings} fretboardHeight={fretboardHeight} theme={theme} />
       {/* Dots */}
       <FretDots frets={frets} fretboardHeight={fretboardHeight} />
       {/* Frets (vertical lines) */}
