@@ -17,7 +17,7 @@ const Frets: React.FC<FretsProps> = ({ frets }) => (
             height: '100%',
             width: 8,
             alignSelf: 'stretch',
-            backgroundColor: '#C0C0C0',
+            backgroundColor: '#A9A9A9',
             shadowColor: '#543310', // deep brown shadow
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.4,

@@ -1,6 +1,10 @@
 
 type NoteDot = [x: number, y: number, note: string, stringIndex: number, fretIndex: number];
 type Note = string;
+
+const ORIGINAL_STRING_VERTICAL_OFFSETS = [0, 0, 0, 0, 0, 0]; // Rolled back to 0 for mathematical centering. Was [0,0,0,0,0,-10]
+const BASE_FRETBOARD_HEIGHT_FOR_OFFSETS = 140.0;
+const ACTUAL_STRING_HEIGHTS = [1.4, 1.8, 2.2, 2.7, 3.5, 5]; // High E to Low E
 // Each of the 6 strings has 13 notes (0-12 frets, where 0 is the open string)
 
 const guitarNotes: Note[][] = [
@@ -55,27 +59,19 @@ function ManualDotPosition(
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
   const gapCount = numStrings + 1;
 
-  // CRITICAL: Reverse the string index to match Strings.tsx
-  const renderedIndex = (numStrings - 1) - stringIndex;
+  // stringIndex 0 (High E) is at the top, stringIndex 5 (Low E) is at the bottom.
+  // This matches the visual rendering in Strings.tsx and the order of ORIGINAL_STRING_VERTICAL_OFFSETS.
   
   // Calculate string position (this positions the TOP of the string)
-  const stringHeight = 2;
-  const stringTop = (marginPercent * fretboardHeight) + ((renderedIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
+  const stringHeight = ACTUAL_STRING_HEIGHTS[stringIndex] || 2; // Use actual height for this string
+  const stringTop = (marginPercent * fretboardHeight) + ((stringIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
   
   // Position dot CENTERED on the string
   const stringMiddle = stringTop + (stringHeight / 2);
   
   // Apply vertical offset based on the string index
   let yOffset = verticalOffset;
-  // Add specific offsets for each string to ensure correct positioning
-  switch (stringIndex) {
-    case 0: yOffset += 26; break; // String 1 (high E)
-    case 1: yOffset += 22; break; // String 2 (B)
-    case 2: yOffset += 16; break; // String 3 (G)
-    case 3: yOffset += 13; break; // String 4 (D)
-    case 4: yOffset += 8;  break; // String 5 (A)
-    case 5: yOffset += 4;  break; // String 6 (low E)
-  }
+  yOffset += getScaledStringOffset(stringIndex, fretboardHeight);
   
   const y = stringMiddle - (DOT_SIZE / 2) + yOffset;
   
@@ -98,9 +94,17 @@ function ManualDotPosition(
   // Apply horizontal offset if provided
   x += horizontalOffset;
   
-  const note = guitarNotes[stringIndex][fretIndex];  
+  const note = guitarNotes[fretIndex][stringIndex];  
   
   return [x, y, note, stringIndex, fretIndex];
+}
+
+function getScaledStringOffset(stringIndex: number, currentFretboardHeight: number): number {
+  if (stringIndex < 0 || stringIndex >= ORIGINAL_STRING_VERTICAL_OFFSETS.length) {
+    return 0; // Should not happen with valid stringIndex
+  }
+  const scaleFactor = currentFretboardHeight / BASE_FRETBOARD_HEIGHT_FOR_OFFSETS;
+  return Math.round(ORIGINAL_STRING_VERTICAL_OFFSETS[stringIndex] * scaleFactor);
 }
 
 // Original random dot generator, with optional manual position
@@ -132,28 +136,20 @@ function GenDotList(
   const dotCoordinates = listOfPositions.map((position) => {
     const fretIndex = Math.floor(position / numStrings)
     const stringIndex = position % numStrings
-    // CRITICAL: Reverse the string index to match Strings.tsx (this is in the Strings.tsx file)
-    const renderedIndex = (numStrings - 1) - stringIndex;
+    // stringIndex 0 (High E) is at the top, stringIndex 5 (Low E) is at the bottom.
+    // This matches the visual rendering in Strings.tsx and the order of ORIGINAL_STRING_VERTICAL_OFFSETS.
     
     // Use EXACT same formula as in Strings.tsx
-    const stringHeight = 2;
-    const stringTop = (marginPercent * fretboardHeight) + ((renderedIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
+    const stringHeight = ACTUAL_STRING_HEIGHTS[stringIndex] || 2; // Use actual height for this string
+    const stringTop = (marginPercent * fretboardHeight) + ((stringIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
     
     // Position dot CENTERED on the string (middle of dot over middle of string)
     // For perfect centering: string's center position - half the dot's height
     const stringMiddle = stringTop + (stringHeight / 2); // Middle of the string
     
     // Apply vertical offset based on the string index
-    let yOffset = verticalOffset;
-    // Add specific offsets for each string to ensure correct positioning
-    switch (stringIndex) {
-      case 0: yOffset += 26; break; // String 1 (high E)
-      case 1: yOffset += 22; break; // String 2 (B)
-      case 2: yOffset += 16; break; // String 3 (G)
-      case 3: yOffset += 13; break; // String 4 (D)
-      case 4: yOffset += 8;  break; // String 5 (A)
-      case 5: yOffset += 4;  break; // String 6 (low E)
-    }
+    let yOffset = verticalOffset; // verticalOffset is the function parameter
+    yOffset += getScaledStringOffset(stringIndex, fretboardHeight);
     
     const y = stringMiddle - (DOT_SIZE / 2) + yOffset;
     

@@ -1,28 +1,27 @@
-import * as React from 'react'
-import { View, Text, StyleSheet, Animated } from 'react-native'
+import * as React from 'react';
+import { useRouter } from 'expo-router'; // Removed Stack and Screen as ExpoRouterScreen
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { View, Text, StyleSheet, Animated, Alert } from 'react-native'
 import "../app.css";
 import Fretboard from "./components/Fretboard";
 import Button from "../components/ui/button";
 import Menu from "./components/Menu";
 import Campaign from "./components/Campaign";
-import GenDotList, { ManualDotPosition } from "./components/DotPositions";
-import { NoteDot } from "./components/DotPositions";
+import GenDotList, { ManualDotPosition as ManualDotPositionFunction } from "./components/DotPositions";
+import { NoteDot, Note } from "./components/DotPositions";
 import LoginScreen from '../LoginScreen';
-import { onAuthStateChanged, Auth } from "firebase/auth";
+import { getAuth, onAuthStateChanged, User as FirebaseUser, signOut, Auth } from 'firebase/auth'; // Added FirebaseUser for clarity
 import { auth } from "../firebase";
 import Settings from "./components/Settings";
-import {Note} from "./components/DotPositions";
 
-export const screenOptions = {
-  headerShown: false,
-}
-const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 const strings = [1, 2, 3, 4, 5, 6]
 // Force light mode for the app
 
 // Centralized UI sizing for all containers and buttons
 const UI_SIZES = {
-  answerBarHeight: '20%', // or e.g. 120 for px
+  answerBarHeight: '25%' as const, // or e.g. 120 for px
   answerBarPadding: 28,
   answerBarGap: 8,
   menuButtonPaddingHorizontal: 32,
@@ -31,12 +30,12 @@ const UI_SIZES = {
   menuButtonMarginBottom: 48,
   menuButtonMarginHorizontal: 50,
   noteButtonMargin: 6,
-  noteButtonPaddingHorizontal: 22,
-  noteButtonPaddingVertical: 18,
+  noteButtonPaddingHorizontal: 10,
+  noteButtonPaddingVertical: 8,
   noteButtonBorderRadius: 16,
   noteButtonMinWidth: 56,
   noteButtonMinHeight: 48,
-  noteButtonFontSize: 22,
+  noteButtonFontSize: 16,
 };
 
 function getStyles(theme: 'light' | 'dark' | 'rocksmith') {
@@ -182,15 +181,66 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
 
 import { ThemeContext } from './_layout';
 
-export default function Screen() {
+export function FretboarderAppScreen() {
   const { theme, setTheme } = React.useContext(ThemeContext);
   const styles = getStyles(theme);
+  const [currentScreen, setScreen] = React.useState('menu'); // 'menu', 'free', 'campaign', 'settings', 'profile'
   const [loggedIn, setLoggedIn] = React.useState(false);
+  const [user, setUser] = React.useState<FirebaseUser | null>(null);
   const [authChecked, setAuthChecked] = React.useState(false);
-  const [screen, setScreen] = React.useState<'menu' | 'campaign' | 'free' | 'settings' | 'profile'>('menu');
+  const [campaignMode, setCampaignMode] = React.useState(false);
+  const [currentLevel, setCurrentLevel] = React.useState(1);
+  const [unlockedLevel, setUnlockedLevel] = React.useState(1); // TODO: Load from storage
+  const [score, setScore] = React.useState(0); // TODO: Load from storage
+  const [resultMessage, setResultMessage] = React.useState<string | null>(null);
+  const [feedbackAnimation] = React.useState(new Animated.Value(0));
+  const [noteQueue, setNoteQueue] = React.useState<NoteDot[]>([]);
+  const [manualDot, setManualDot] = React.useState<NoteDot | null>(null);
+  const [currentNote, setCurrentNote] = React.useState<Note | null>(null);
+  const [targetNote, setTargetNote] = React.useState<Note | null>(null);
+  const [lastCorrectNote, setLastCorrectNote] = React.useState<string | null>(null);
+  const [lastIncorrectNote, setLastIncorrectNote] = React.useState<string | null>(null);
+
+  // Screen orientation effect
+  React.useEffect(() => {
+    async function changeScreenOrientation() {
+      if (currentScreen === 'free' || currentScreen === 'campaign') {
+        console.log('Locking to LANDSCAPE_RIGHT for game modes');
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT).catch(e => console.error('Failed to lock game mode orientation:', e));
+      } else if (currentScreen === 'settings' || currentScreen === 'menu') {
+        console.log('Locking to PORTRAIT_UP for settings or menu');
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(e => console.error('Failed to lock settings/menu orientation:', e));
+      } else {
+        console.log('Unlocking orientation for any other screens');
+        await ScreenOrientation.unlockAsync().catch(e => console.error('Failed to unlock orientation for other screens:', e));
+      }
+    }
+    changeScreenOrientation();
+
+    return () => {
+      // Attempt to unlock when the screen changes away from game modes or component unmounts
+      console.log('Cleaning up orientation lock for:', currentScreen);
+      // When the component unmounts or currentScreen changes, 
+      // unlock orientation. The next screen's effect will apply its own lock if needed.
+      // This simplifies cleanup logic.
+      ScreenOrientation.unlockAsync().catch(e => console.error('Failed to unlock orientation on cleanup:', e));
+    };
+  }, [currentScreen]);
+
+  // Firebase auth listener
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      setUser(firebaseUser);
+      setLoggedIn(!!firebaseUser);
+      setAuthChecked(true);
+    });
+    return unsubscribe; // Cleanup subscription
+  }, []);
+
+ 
   // Free mode state (always defined, only used when in free mode)
   const [difficulty, setDifficulty] = React.useState(0);
-  const [fretboardHeight, setFretboardHeight] = React.useState(140);
+  const [fretboardHeight, setFretboardHeight] = React.useState(200);
   const [manualMode, setManualMode] = React.useState(false);
   const [manualString, setManualString] = React.useState(0); // First string (High E, 0-indexed, at the top)
   const [manualFret, setManualFret] = React.useState(0);    // First fret
@@ -198,21 +248,15 @@ export default function Screen() {
   const [horizontalOffset, setHorizontalOffset] = React.useState(0); // Horizontal offset
   const [noteDot, setNoteDot] = React.useState<NoteDot>(
     manualMode 
-      ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+      ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
       : GenDotList(fretboardHeight, strings.length, difficulty)
-  )
-  const [resultMessage, setResultMessage] = React.useState<string | null>(null);
-  const [lastCorrectNote, setLastCorrectNote] = React.useState<string | null>(null);
+  );
   const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
-  const [score, setScore] = React.useState(0);
-  const [numberOfPositions, setNumberOfPositions] = React.useState(30)
-  const [unlockedLevel, setUnlockedLevel] = React.useState(1);
-  const [campaignMode, setCampaignMode] = React.useState(true)
-  const [selectedLevel, setSelectedLevel] = React.useState(1)
-  const [fullList, setFullList] = React.useState(true)
-  const [lastIncorrectNote, setLastIncorrectNote] = React.useState<string | null>(null);
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
-  const SetLevel = (level: number) => {
+  const [numberOfPositions, setNumberOfPositions] = React.useState<number>(30)
+  const [selectedLevel, setSelectedLevel] = React.useState<number>(1)
+  const [fullList, setFullList] = React.useState<boolean>(true)
+  const setLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
     setNumberOfPositions(30)
@@ -250,13 +294,14 @@ const NOTE_NAMES = (
     return arr
   }
 )()
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
-      setLoggedIn(!!user)
-      setAuthChecked(true);
-    })
-    return unsubscribe
-  }, [])
+  // This useEffect for Firebase auth is being replaced by the one consolidated above.
+  // React.useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth as Auth, as Auth, (currentUser) => {
+  //     setLoggedIn(!!currentUser)
+  //     setAuthChecked(true);
+  //   })
+  //   return unsubscribe
+  // }, [])
 
   if (!authChecked) {
     // Optionally show a loading spinner here
@@ -267,18 +312,18 @@ const NOTE_NAMES = (
     return <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
-  if (screen === 'campaign'){
+  if (currentScreen === 'campaign'){
     return (
       <Campaign
         onBack={() => setScreen('menu')}
-        onLevelSelect={SetLevel}
+        onLevelSelect={(level) => { setCurrentLevel(level); setCampaignMode(true); setScreen('free');}}
         unlockedLevel={unlockedLevel}
         score={score}
       />
     );
   }
 
-  if (screen === 'settings') {
+  if (currentScreen === 'settings') {
     return (
       <Settings
         onBack={() => setScreen('menu')}
@@ -290,7 +335,7 @@ const NOTE_NAMES = (
     )
   }
 
-  if (screen === 'free') {
+  if (currentScreen === 'free') {
     const gameOver = numberOfPositions === 0;
     // Custom message based on score
     let performanceMsg = ''
@@ -475,6 +520,41 @@ const NOTE_NAMES = (
                     borderWidth: theme === 'rocksmith' ? 2 : 0,
                   },
                 ]}
+                onPress={() => setScreen('menu')}
+              >
+                <Text
+                  style={[
+                    styles.menuButtonText,
+                    {
+                      fontSize: 16,
+                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  Menu
+                </Text>
+              </Button>
+            )}
+            {/* Original content of !campaignMode block was an incomplete button, so it's replaced. If other buttons were intended here, they need to be added separately. */}
+            {/* The following is a placeholder to ensure the structure is valid if the original !campaignMode block was just an opening. */}
+            {false && (
+              <Button
+                style={[
+                  styles.menuButton,
+                  {
+                    minWidth: 80,
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    height: undefined,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                  },
+                ]}
                 onPress={() => {
                   setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
                   setScore(0);
@@ -546,7 +626,7 @@ const NOTE_NAMES = (
                       // Update dot position based on new mode
                       setNoteDot(
                         !manualMode 
-                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
                           : GenDotList(fretboardHeight, strings.length, difficulty )
                       );
                     }}
@@ -564,7 +644,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newString = Math.max(0, manualString - 1);
                       setManualString(newString);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>-</Text>
@@ -575,7 +655,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newString = Math.min(strings.length - 1, manualString + 1);
                       setManualString(newString);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, newString, manualFret, verticalOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>+</Text>
@@ -591,7 +671,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newFret = Math.max(0, manualFret - 1);
                       setManualFret(newFret);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>-</Text>
@@ -602,7 +682,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newFret = Math.min(12, manualFret + 1);
                       setManualFret(newFret);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, newFret, verticalOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>+</Text>
@@ -618,7 +698,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newOffset = verticalOffset - 2 // Move up by 2px
                       setVerticalOffset(newOffset);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>↑</Text>
@@ -629,7 +709,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newOffset = verticalOffset + 2; // Move down by 2px
                       setVerticalOffset(newOffset);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, newOffset, horizontalOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>↓</Text>
@@ -645,7 +725,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newOffset = horizontalOffset - 2; // Move left by 2px
                       setHorizontalOffset(newOffset);
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset));
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset));
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>←</Text>
@@ -656,7 +736,7 @@ const NOTE_NAMES = (
                     onPress={() => {
                       const newOffset = horizontalOffset + 2; // Move right by 2px
                       setHorizontalOffset(newOffset)
-                      setNoteDot(ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset))
+                      setNoteDot(ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, newOffset))
                     }}
                   >
                     <Text style={{ color: '#F8F4E1', fontWeight: 'bold' }}>→</Text>
@@ -685,7 +765,7 @@ const NOTE_NAMES = (
                       ManageResultMessage("✅")
                       setNoteDot(
                         manualMode 
-                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
                           : GenDotList(fretboardHeight, strings.length, difficulty)
                       )
                       setScore(score + 1)
@@ -697,7 +777,7 @@ const NOTE_NAMES = (
                       ManageResultMessage("❌")
                       setNoteDot(
                         manualMode 
-                          ? ManualDotPosition(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                          ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
                           : GenDotList(fretboardHeight, strings.length, difficulty)
                       );
                       setNumberOfPositions(numberOfPositions - 1);
@@ -715,7 +795,7 @@ const NOTE_NAMES = (
             </View>
           </View>
           {/* Fretboard, slightly bigger height for better fit */}
-          <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 40, marginBottom: 20 }}>
+          <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 10, marginBottom: 20 }}>
             <Fretboard
               frets={frets}
               strings={strings}
@@ -727,130 +807,187 @@ const NOTE_NAMES = (
           </View>
         </View>
       </View>
+
     );
   }
 
   // Profile screen
-  if (screen === 'profile') {
-    const user = auth.currentUser;
+  if (currentScreen === 'profile') {
+    if (!authChecked || !user) {
+      // Loading state or if user is null
+      return (
+        <View style={theme === 'rocksmith' ? styles.root : { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F4E1' }}>
+          <Text style={theme === 'rocksmith' ? { fontSize: 18, color: styles.menuButtonText.color } : { fontSize: 18, color: '#543310' }}>Loading profile...</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={[styles.root, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F4E1' }]}> 
-        <View style={{
-          backgroundColor: '#fff',
-          borderRadius: 24,
-          padding: 32,
-          alignItems: 'center',
-          shadowColor: '#000',
-          shadowOpacity: 0.10,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 8,
-          minWidth: 320,
-          maxWidth: 380,
-        }}>
+      <View style={theme === 'rocksmith' ? styles.root : { backgroundColor: '#F8F4E1', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={theme === 'rocksmith' ?
+          [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center', minWidth: 320, maxWidth: 380, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
+          :
+          {
+            backgroundColor: '#E0C097', // Light wood color for the card
+            borderRadius: 16,
+            padding: 32,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.10,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 8,
+            minWidth: 320,
+            maxWidth: 380,
+          }
+        }>
           {/* Profile avatar/icon */}
           <View style={{
-            width: 80, height: 80, borderRadius: 40, backgroundColor: '#AF8F6F',
-            alignItems: 'center', justifyContent: 'center', marginBottom: 18, borderWidth: 2, borderColor: '#74512D',
+            width: 80, height: 80, borderRadius: 40,
+            backgroundColor: theme === 'rocksmith' ? '#3a3d3e' : '#AF8F6F',
+            alignItems: 'center', justifyContent: 'center', marginBottom: 18, borderWidth: 2,
+            borderColor: theme === 'rocksmith' ? (styles.menuButton.borderColor || '#FFD900') : '#74512D',
           }}>
-            <Text style={{ fontSize: 40, color: '#F8F4E1', fontWeight: 'bold' }}>
+            <Text style={{ fontSize: 40, color: theme === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#F8F4E1', fontWeight: 'bold' }}>
               {user?.email ? user.email[0].toUpperCase() : 'U'}
             </Text>
           </View>
           {/* Profile title */}
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#543310', marginBottom: 10, letterSpacing: 1 }}>User Profile</Text>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#543310', marginBottom: 10, letterSpacing: 1 }}>User Profile</Text>
           {/* Display name */}
-          <Text style={{ fontSize: 20, color: '#543310', fontWeight: '600', marginBottom: 8, backgroundColor: '#F8F4E1', padding: 8, borderRadius: 8 }}>
+          <Text style={{
+            fontSize: 20,
+            color: theme === 'rocksmith' ? '#FFFFFF' : '#543310',
+            fontWeight: '600',
+            marginBottom: 8,
+            backgroundColor: theme === 'rocksmith' ? 'transparent' : '#F8F4E1',
+            paddingVertical: 8, 
+            paddingHorizontal: 12, 
+            borderRadius: 8,
+            textAlign: theme === 'rocksmith' ? 'center' : 'left', 
+            minWidth: 200, 
+          }}>
             {user?.displayName || 'No display name set'}
           </Text>
           {/* Email */}
-          <Text style={{ fontSize: 18, color: '#74512D', marginBottom: 24, fontWeight: '600', backgroundColor: '#F8F4E1', padding: 8, borderRadius: 8 }}>
+          <Text style={{
+            fontSize: 18,
+            color: theme === 'rocksmith' ? '#DDDDDD' : '#74512D',
+            fontWeight: '600',
+            marginBottom: 24,
+            backgroundColor: theme === 'rocksmith' ? 'transparent' : '#F8F4E1',
+            paddingVertical: 8, 
+            paddingHorizontal: 12, 
+            borderRadius: 8,
+            textAlign: theme === 'rocksmith' ? 'center' : 'left', 
+            minWidth: 200, 
+          }}>
             {user?.email || 'N/A'}
           </Text>
           <Button
-            style={{ backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            style={theme === 'rocksmith' ?
+              [styles.menuButton, { width: 180, marginTop: 4, marginBottom: 8, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
+              :
+              { backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
+            }
             onPress={() => {
-              import('react-native').then(({ Alert }) => {
-                Alert.alert(
-                  'Log out',
-                  'Are you sure you want to log out?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Log out', style: 'destructive', onPress: async () => {
-                        const { signOut } = await import('firebase/auth');
-                        await signOut(auth);
-                        setLoggedIn(false);
-                        setScreen('menu');
-                      }
-                    },
-                  ]
-                );
-              });
+              Alert.alert(
+                'Log out',
+                'Are you sure you want to log out?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Log out',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await signOut(auth);
+                      setLoggedIn(false);
+                      setScreen('menu');
+                    }
+                  },
+                ]
+              );
             }}
           >
-            <Text style={{ color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
+            <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
           </Button>
           <Button
-            style={{ backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }}
+            style={theme === 'rocksmith' ?
+              [styles.menuButton, { width: 180, marginTop: 8, marginBottom: 0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
+              :
+              { backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
+            }
             onPress={() => setScreen('menu')}
           >
-            <Text style={{ color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
+            <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
           </Button>
         </View>
       </View>
     );
   }
 
-      // Default to menu
-      return (
-        <Menu
-          onCampaign={() => {
-        setScreen('campaign');
-        setCampaignMode(true);
-      }}
-          onFreeMode={() => { 
-        setScreen('free')
-        setCampaignMode(false);
-      }}
-          onSettings={() => setScreen('settings')}
-          // Add a Profile button to the menu
-          extraButtons={
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-              <Button
-                style={{ backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }}
-                onPress={() => setScreen('profile')}
-              >
-                <Text style={{ color: "#543310", fontWeight: "bold" }}>Profile</Text>
-              </Button>
-              <Button
-                style={{ backgroundColor: "#b22222", padding: 12, borderRadius: 8, minWidth: 110 }}
-                onPress={() => {
-                  import('react-native').then(({ Alert }) => {
-                    Alert.alert(
-                      'Exit',
-                      'Are you sure you want to exit the app?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Exit', style: 'destructive', onPress: () => {
-                            // On mobile, use BackHandler.exitApp(); on web, show a message
-                            import('react-native').then(({ BackHandler, Platform }) => {
-                              if (Platform.OS === 'android') {
-                                BackHandler.exitApp();
-                              } else {
-                                Alert.alert('Exit', 'Exit is only available on Android devices.');
-                              }
-                            });
-                          }
-                        },
-                      ]
-                    );
-                  });
-                }}
-              >
-                <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Exit</Text>
-              </Button>
-            </View>
-          }
-        />
-      );
-    }
+// ... (rest of the code remains the same)
+  // Menu screen
+  if (currentScreen === 'menu') {
+    return (
+      <Menu
+        onCampaign={() => {
+          setScreen('campaign');
+          setCampaignMode(true);
+        }}
+        onFreeMode={() => { 
+          setScreen('free')
+          setCampaignMode(false);
+        }}
+        onSettings={() => setScreen('settings')}
+        // Add a Profile button to the menu
+        extraButtons={
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+            <Button
+              style={theme === 'rocksmith' ? 
+                [styles.menuButton, { marginBottom: 0, marginLeft:0, marginRight:0, paddingHorizontal: UI_SIZES.menuButtonPaddingHorizontal / 2, paddingVertical: UI_SIZES.menuButtonPaddingVertical / 2, minWidth: 110 }] 
+                : 
+                { backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }
+              }
+              onPress={() => setScreen('profile')}
+            >
+              <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold" }}>Profile</Text>
+            </Button>
+            <Button
+              style={{ backgroundColor: "#b22222", padding: 12, borderRadius: 8, minWidth: 110 }}
+              onPress={() => {
+                import('react-native').then(({ Alert }) => {
+                  Alert.alert(
+                    'Exit',
+                    'Are you sure you want to exit the app?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Exit', style: 'destructive', onPress: () => {
+                          // On mobile, use BackHandler.exitApp(); on web, show a message
+                          import('react-native').then(({ BackHandler, Platform }) => {
+                            if (Platform.OS === 'android') {
+                              BackHandler.exitApp();
+                            } else {
+                              Alert.alert('Exit', 'Exit is only available on Android devices.');
+                            }
+                          });
+                        }
+                      },
+                    ]
+                  );
+                });
+              }}
+            >
+              <Text style={{ color: "#F8F4E1", fontWeight: "bold" }}>Exit</Text>
+            </Button>
+          </View>
+        }
+      />
+    );
+  }
+  // Fallback or loading state if authChecked is false or no screen matches
+  // You might want to render a loading spinner or null here
+  return null;
+}
+
+export default FretboarderAppScreen;

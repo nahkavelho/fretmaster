@@ -43,7 +43,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
                   width: dotSize,
                   height: dotSize,
                   borderRadius: dotSize / 2,
-                  backgroundColor: '#333',
+                  backgroundColor: theme === 'rocksmith' ? '#FFD900' : theme === 'dark' ? '#FFF' : '#333',
                 }}
               />
               <View
@@ -54,7 +54,7 @@ const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
                   width: dotSize,
                   height: dotSize,
                   borderRadius: dotSize / 2,
-                  backgroundColor: '#333',
+                  backgroundColor: theme === 'rocksmith' ? '#FFD900' : theme === 'dark' ? '#FFF' : '#333',
                 }}
               />
             </React.Fragment>
