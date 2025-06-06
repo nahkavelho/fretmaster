@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
@@ -22,4 +23,48 @@ try {
   auth = getAuth(app);
 }
 
-export { auth };
+// Initialize Firestore (v1)
+const db = getFirestore(app);
+
+// Firestore functions for user progress
+export const saveUserLevel = async (userId, level) => {
+  if (!userId) return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    // Get current progress to only update if new level is higher
+    const docSnap = await getDoc(userProgressRef);
+    if (docSnap.exists()) {
+      const currentProgress = docSnap.data();
+      if (level > (currentProgress.highestLevelCompleted || 0)) {
+        await setDoc(userProgressRef, { highestLevelCompleted: level }, { merge: true });
+        console.log("User level progress saved:", userId, level);
+      }
+    } else {
+      // If no document exists, create it
+      await setDoc(userProgressRef, { highestLevelCompleted: level });
+      console.log("User level progress created and saved:", userId, level);
+    }
+  } catch (error) {
+    console.error("Error saving user level:", error);
+  }
+};
+
+export const getUserLevel = async (userId) => {
+  if (!userId) return null;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    if (docSnap.exists()) {
+      console.log("User level progress loaded:", userId, docSnap.data().highestLevelCompleted);
+      return docSnap.data().highestLevelCompleted;
+    } else {
+      console.log("No progress found for user:", userId);
+      return null; // Or a default starting level like 0 or 1
+    }
+  } catch (error) {
+    console.error("Error getting user level:", error);
+    return null;
+  }
+};
+
+export { auth, db }; // saveUserLevel and getUserLevel are now exported individually
