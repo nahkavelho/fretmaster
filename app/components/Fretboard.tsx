@@ -2,7 +2,7 @@ import React from "react"
 import Frets from "./Frets"
 import Strings from "./Strings"
 import FretDots from "./FretDots"
-import { View } from "react-native"
+import { View, Animated } from "react-native" // Import Animated
 import { Dimensions } from 'react-native'
 
 interface FretboardProps {
@@ -52,23 +52,54 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, 
 }
 
 const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current; // Animated value for scaling
+
+  React.useEffect(() => {
+    if (noteDot) { // Only animate if noteDot exists
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.25, // Scale up
+            duration: 700,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1, // Scale down
+            duration: 700,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+    // Cleanup animation on component unmount or if noteDot becomes null
+    return () => {
+      scaleAnim.setValue(1); // Reset scale
+      // Consider stopping the animation explicitly if Animated.loop doesn't handle it well on cleanup
+      // For instance, by keeping a reference to the animation and calling .stop()
+    };
+  }, [noteDot, scaleAnim]); // Rerun effect if noteDot changes
+
+  if (!noteDot) {
+    return null; // Don't render if there's no dot
+  }
+
   return (
-    <View
+    <Animated.View // Use Animated.View
       style={{
         position: 'absolute',
         left: `${noteDot[0]}%`,
         top: noteDot[1],
-        width: 16,
-        height: 16,
-        borderRadius: 8,
-        backgroundColor: '#F8F4E1', // cream dot for contrast
+        width: 18, // Slightly larger for better visibility
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: '#FFD700', // Brighter gold color
         borderWidth: 2,
-        borderColor: '#543310', // deep brown border
+        borderColor: '#b8860b', // Darker gold/brown border for contrast
         zIndex: 10, // Ensure dot displays above strings
+        transform: [{ scale: scaleAnim }], // Apply scaling animation
       }}
-    >
-    </View>
-  )
-}
+    />
+  );
+};
 
 export default Fretboard

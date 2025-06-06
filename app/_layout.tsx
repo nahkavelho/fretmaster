@@ -8,13 +8,15 @@ import { Platform } from 'react-native';
 import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { PortalHost } from '@rn-primitives/portal';
+import { useFonts } from 'expo-font';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 
 // Theme context määrittely
 export const ThemeContext = React.createContext<{
   theme: 'light' | 'dark' | 'rocksmith',
   setTheme: (theme: 'light' | 'dark' | 'rocksmith') => void
-}>({ theme: 'light', setTheme: () => {} });
+}>({ theme: 'rocksmith', setTheme: () => {} });
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -53,11 +55,14 @@ export {
 } from 'expo-router';
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    ...FontAwesome5.font,
+  });
   const hasMounted = React.useRef(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
   // Theme state ylös tänne
-  const [theme, setTheme] = React.useState<'light' | 'dark' | 'rocksmith'>('light');
+  const [theme, setTheme] = React.useState<'light' | 'dark' | 'rocksmith'>('rocksmith');
 
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {
@@ -69,15 +74,24 @@ export default function RootLayout() {
       document.documentElement.classList.add('bg-background');
     }
     setAndroidNavigationBar(colorScheme);
+    // Font loading check can also be here or tied to fontsLoaded state
+    // For simplicity, we'll rely on the !fontsLoaded check before rendering
     setIsColorSchemeLoaded(true);
     hasMounted.current = true;
   }, []);
 
-  if (!isColorSchemeLoaded) {
+  if (!isColorSchemeLoaded || (!fontsLoaded && !fontError)) {
     return null;
   }
 
-  const themeObj = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
+  let themeObj;
+  if (theme === 'dark') {
+    themeObj = DARK_THEME;
+  } else if (theme === 'rocksmith') {
+    themeObj = ROCKSMITH_THEME;
+  } else {
+    themeObj = LIGHT_THEME;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

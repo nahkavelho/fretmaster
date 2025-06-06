@@ -86,9 +86,42 @@ function ManualDotPosition(
   } else if (fretIndex === 1) {
     // Special case for fret 1 - apply a -8px horizontal offset
     x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 8;
+  } else if (fretIndex === 2) {
+    // Special case for fret 2 - apply a -10px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 10;
+  } else if (fretIndex === 3) {
+    // Special case for fret 3 - apply a -12px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 12;
+  } else if (fretIndex === 4) {
+    // Special case for fret 4 - apply a -14px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 14;
+  } else if (fretIndex === 5) {
+    // Special case for fret 5 - apply a -15px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 15;
+  } else if (fretIndex === 6) {
+    // Special case for fret 6 - apply a -17px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 17;
+  } else if (fretIndex === 7) {
+    // Special case for fret 7 - apply a -19px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 19;
+  } else if (fretIndex === 8) {
+    // Special case for fret 8 - apply a -20px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 20;
+  } else if (fretIndex === 9) {
+    // Special case for fret 9 - apply a -22px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 22;
+  } else if (fretIndex === 10) {
+    // Special case for fret 10 - apply a -24px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 24;
+  } else if (fretIndex === 11) {
+    // Special case for fret 11 - apply a -26px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 26;
+  } else if (fretIndex === 12) {
+    // Special case for fret 12 - apply a -27px horizontal offset
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 27;
   } else {
-    // For frets 2+ shift them back one position (fret 2 at old fret 1 position, etc.)
-    x = ((FirstNoteX + (fretIndex - 1) * noteStepx) / 100) * noteStepx;
+    // For frets 13+, apply a -8px horizontal offset for centering
+    x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 8;
   }
   
   // Apply horizontal offset if provided
@@ -164,9 +197,42 @@ function GenDotList(
     } else if (fretIndex === 1) {
       // Special case for fret 1 - apply a -8px horizontal offset
       x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 8;
+    } else if (fretIndex === 2) {
+      // Special case for fret 2 - apply a -10px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 10;
+    } else if (fretIndex === 3) {
+      // Special case for fret 3 - apply a -12px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 12;
+    } else if (fretIndex === 4) {
+      // Special case for fret 4 - apply a -14px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 14;
+    } else if (fretIndex === 5) {
+      // Special case for fret 5 - apply a -15px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 15;
+    } else if (fretIndex === 6) {
+      // Special case for fret 6 - apply a -17px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 17;
+    } else if (fretIndex === 7) {
+      // Special case for fret 7 - apply a -19px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 19;
+    } else if (fretIndex === 8) {
+      // Special case for fret 8 - apply a -20px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 20;
+    } else if (fretIndex === 9) {
+      // Special case for fret 9 - apply a -22px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 22;
+    } else if (fretIndex === 10) {
+      // Special case for fret 10 - apply a -24px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 24;
+    } else if (fretIndex === 11) {
+      // Special case for fret 11 - apply a -26px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 26;
+    } else if (fretIndex === 12) {
+      // Special case for fret 12 - apply a -27px horizontal offset
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 27;
     } else {
-      // For frets 2+ shift them back one position (fret 2 at old fret 1 position, etc.)
-      x = ((FirstNoteX + (fretIndex - 1) * noteStepx) / 100) * noteStepx;
+      // For frets 13+, apply a -8px horizontal offset for centering
+      x = ((FirstNoteX + fretIndex * noteStepx) / 100) * noteStepx - 8;
     }
     
     const note = guitarNotes[fretIndex][stringIndex]

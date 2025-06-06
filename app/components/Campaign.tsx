@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import * as ScreenOrientation from 'expo-screen-orientation';
 import Button from "../../components/ui/button";
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -53,16 +54,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  landscapeContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8F4E1',
+  }
 });
 
 import { ThemeContext } from '../_layout';
 
 const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
+  useEffect(() => {
+    const lockOrientation = async () => {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+
+    const unlockOrientation = async () => {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
+    };
+
+    lockOrientation();
+
+    return () => {
+      unlockOrientation();
+    };
+  }, []);
   const { theme } = React.useContext(ThemeContext);
   const bgColor = theme === 'rocksmith' ? '#181A1B' : '#F8F4E1';
   const titleColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
   const questTextColor = theme === 'rocksmith' ? '#FFD900' : '#74512D';
   const iconColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
+
   return (
     <View style={[styles.container, { backgroundColor: bgColor }] }>
       <Text style={[styles.title, { color: titleColor }]}>Campaign</Text>
