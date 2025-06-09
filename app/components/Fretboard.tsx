@@ -11,47 +11,42 @@ interface FretboardProps {
   fretboardHeight: number
   noteDot: [x: number, y: number, note: string, stringIndex: number, fretIndex: number]
   difficulty: number
+  themeName: ThemeName
+  palette: ThemePalette
 }
 
 interface DrawNoteDotProps {
   noteDot: [x: number, y: number, note: string, stringIndex: number, fretIndex: number]
+  themeName: ThemeName
+  palette: ThemePalette
 }
 
-// Theme browns
-const BROWN_BG = '#74512D'; // mid brown, matches Free Mode/menu/fret dots
-const BORDER = '#AF8F6F'; // tan border
-// area that is not in use by dufficulties
-const UNUSED_AREA_COLOR = '#C0C0C0';
+import { ThemeName, ThemePalette } from '../ThemeContext';
 
-import { ThemeContext } from '../_layout';
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty, themeName, palette }) => {
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty }) => {
-  const { theme } = React.useContext(ThemeContext);
-
-    const max_difficulty = 12;
-    const screenWidth = Dimensions.get('window').width;
-    const percent = Math.min(100, Math.max(0, (difficulty / max_difficulty) * 100));
-    const usedWidth = (percent / 100) * screenWidth;
-    const bgColor = theme === 'rocksmith' ? '#181A1B' : UNUSED_AREA_COLOR;
-    const borderColor = theme === 'rocksmith' ? '#444' : BORDER;
-    const nutColor = theme === 'rocksmith' ? '#232526' : BROWN_BG;
+  const max_difficulty = 12;
+  const screenWidth = Dimensions.get('window').width;
+  const percent = Math.min(100, Math.max(0, (difficulty / max_difficulty) * 100));
+  const usedWidth = (percent / 100) * screenWidth;
+  const bgColor = palette.fretboardBackground;
+  const borderColor = palette.fretboardBorder;
+  const nutColor = palette.fretboardNut;
   return (
     <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: bgColor, borderRadius: 16, borderWidth: 4, borderColor: borderColor }}>
-      {/* Guitar Nut (white bar at the left edge) */}
-      <View style={{ position: 'absolute', left: 0, top: 0, width: usedWidth, height: fretboardHeight, backgroundColor: nutColor }} />
       {/* Strings (horizontal lines) */}
-      <Strings strings={strings} fretboardHeight={fretboardHeight} theme={theme} />
+      <Strings strings={strings} fretboardHeight={fretboardHeight} themeName={themeName} stringColors={palette.stringColors} palette={palette} />
       {/* Dots */}
       <FretDots frets={frets} fretboardHeight={fretboardHeight} />
       {/* Frets (vertical lines) */}
       <Frets frets={frets} />
       {/* Random note dots */}
-      <DrawNoteDot noteDot={noteDot} />
+      <DrawNoteDot noteDot={noteDot} themeName={themeName} palette={palette} />
     </View>
   )
 }
 
-const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
+const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot, themeName, palette }) => {
   const scaleAnim = React.useRef(new Animated.Value(1)).current; // Animated value for scaling
 
   React.useEffect(() => {
@@ -92,9 +87,9 @@ const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot }) => {
         width: 18, // Slightly larger for better visibility
         height: 18,
         borderRadius: 9,
-        backgroundColor: '#FFD700', // Brighter gold color
+        backgroundColor: themeName === 'sunsetGlow' ? (noteDot[4] === 0 ? '#FF5252' : '#5D4037') : (noteDot[4] === 0 ? palette.noteDotOpen : palette.noteDotFretted),
         borderWidth: 2,
-        borderColor: '#b8860b', // Darker gold/brown border for contrast
+        borderColor: noteDot[4] === 0 ? palette.noteDotOpenBorder : palette.noteDotFrettedBorder,
         zIndex: 10, // Ensure dot displays above strings
         transform: [{ scale: scaleAnim }], // Apply scaling animation
       }}

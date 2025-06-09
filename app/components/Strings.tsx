@@ -5,14 +5,14 @@ import { ROCKSMITH_STRING_COLORS } from '../_layout';
 interface StringsProps {
   strings: number[];
   fretboardHeight: number;
-  theme?: 'light' | 'dark' | 'rocksmith';
+  themeName: ThemeName;
+  stringColors: string[];
+  palette: ThemePalette; // Added palette
 }
 
-import { ThemeContext } from '../_layout';
+import { ThemeName, ThemePalette } from '../_layout'; // Added ThemePalette
 
-const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, theme: themeProp }) => {
-  const { theme } = React.useContext(ThemeContext);
-  const activeTheme = themeProp || theme;
+const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, themeName, stringColors, palette }) => { // Added palette
   return (
     <>
       {strings.map((string: number, i: number) => {
@@ -27,7 +27,7 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, theme: them
         const renderedIndex = (strings.length - 1) - i;
         const gapCount = strings.length + 1;
         const top = (marginPercent * fretboardHeight) + ((renderedIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
-        const stringColor = activeTheme === 'rocksmith' ? ROCKSMITH_STRING_COLORS[i % 6] : '#C0C0C0';
+        const stringColor = stringColors[i % stringColors.length];
         return (
           <View
             key={i}
@@ -38,7 +38,7 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, theme: them
               top,
               height: stringHeight,
               backgroundColor: stringColor,
-              shadowColor: activeTheme === 'rocksmith' ? '#222' : '#543310',
+              shadowColor: palette.shadow,
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.4,
               shadowRadius: 2,

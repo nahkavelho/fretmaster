@@ -14,15 +14,15 @@ interface CampaignProps {
 const LEVEL_COUNT = 12;
 const QUESTS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ id: i + 1, name: `Level ${i + 1}` }));
 
-const styles = StyleSheet.create({
+const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F4E1',
+    backgroundColor: palette.background,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
   title: {
-    color: '#543310',
+    color: palette.text,
     fontSize: 28,
     fontWeight: 'bold',
     marginTop: 32,
@@ -34,13 +34,13 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   questText: {
-    color: '#74512D',
+    color: palette.textSecondary,
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 18,
   },
   backButton: {
-    backgroundColor: '#AF8F6F',
+    backgroundColor: palette.button, // Or a more specific palette color if available
     paddingHorizontal: 48,
     paddingVertical: 20,
     borderRadius: 12,
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButtonText: {
-    color: '#543310',
+    color: palette.buttonText, // Or a more specific palette color if available
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -58,13 +58,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8F4E1',
+    backgroundColor: palette.background,
+  },
+  iconStyle: { // Added for icon color
+    color: palette.icon,
   }
 });
 
-import { ThemeContext } from '../_layout';
+import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Added ThemeName and ThemePalette
 
 const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
+  const { themeName, palette } = React.useContext(ThemeContext);
+  const styles = getStyles(themeName, palette); // Call getStyles
   useEffect(() => {
     const lockOrientation = async () => {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -80,15 +85,9 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
       unlockOrientation();
     };
   }, []);
-  const { theme } = React.useContext(ThemeContext);
-  const bgColor = theme === 'rocksmith' ? '#181A1B' : '#F8F4E1';
-  const titleColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
-  const questTextColor = theme === 'rocksmith' ? '#FFD900' : '#74512D';
-  const iconColor = theme === 'rocksmith' ? '#FFD900' : '#543310';
-
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }] }>
-      <Text style={[styles.title, { color: titleColor }]}>Campaign</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Campaign</Text>
       <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ justifyContent: 'flex-start', alignItems: 'center', paddingTop: 32, paddingBottom: 32 }}>
         {QUESTS.map((quest, idx) => (
           <View key={quest.id} style={[styles.questRow, { marginBottom: idx === QUESTS.length - 1 ? 0 : 32 }, quest.id > unlockedLevel ? { opacity: 0.5 } : {} ] }>
@@ -98,14 +97,14 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
               activeOpacity={0.8}
               style={{ padding: 8 }}
             >
-              <FontAwesome5 name="guitar" size={48} color={iconColor} />
+              <FontAwesome5 name="guitar" size={48} style={styles.iconStyle} />
             </TouchableOpacity>
-            <Text style={[styles.questText, { color: questTextColor }]}>{quest.name}</Text>
+            <Text style={styles.questText}>{quest.name}</Text>
           </View>
         ))}
       </ScrollView>
-      <Button onPress={onBack} style={{ marginTop: 16 }}>
-        <Text style={{ color: theme === 'rocksmith' ? '#FFD900' : '#543310', fontWeight: 'bold', fontSize: 18 }}>Back to Menu</Text>
+      <Button onPress={onBack} style={styles.backButton} >
+        <Text style={styles.backButtonText}>Back to Menu</Text>
       </Button>
     </View>
   );

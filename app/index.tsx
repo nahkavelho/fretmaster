@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useRouter } from 'expo-router'; // Removed Stack and Screen as ExpoRouterScreen
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { View, Text, StyleSheet, Animated, Alert } from 'react-native'
-import "../app.css";
+import { View, Text, StyleSheet, Animated, Alert, ViewStyle, TextStyle } from 'react-native';
 import Fretboard from "./components/Fretboard";
 import Button from "../components/ui/button";
 import Menu from "./components/Menu";
@@ -13,6 +12,7 @@ import LoginScreen from '../LoginScreen';
 import { getAuth, onAuthStateChanged, User as FirebaseUser, signOut, Auth } from 'firebase/auth'; // Added FirebaseUser for clarity
 import { auth, getUserLevel, saveUserLevel } from "../firebase"; // Add getUserLevel and saveUserLevel
 import Settings from "./components/Settings";
+import { ThemeContext, ThemeName, ThemePalette } from './ThemeContext';
 
 
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -38,58 +38,58 @@ const UI_SIZES = {
   noteButtonFontSize: 16,
 };
 
-function getStyles(theme: 'light' | 'dark' | 'rocksmith') {
+function getStyles(theme: 'light' | 'dark' | 'rocksmith', palette: any) {
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: theme === 'rocksmith' ? '#181A1B' : '#F8F4E1',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: palette.background,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
     },
     fretboardContainer: {
       flex: 1,
       width: '100%',
-      backgroundColor: theme === 'rocksmith' ? '#181A1B' : '#F8F4E1',
-      justifyContent: 'center',
-      alignItems: 'center',
+      backgroundColor: palette.background,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
     },
     menuButton: {
-      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
-      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-      borderWidth: theme === 'rocksmith' ? 2 : 0,
+      backgroundColor: palette.buttonBackground,
+      borderColor: palette.buttonBorderColor,
+      borderWidth: 2,
       paddingHorizontal: UI_SIZES.menuButtonPaddingHorizontal,
       paddingVertical: UI_SIZES.menuButtonPaddingVertical,
       borderRadius: UI_SIZES.menuButtonBorderRadius,
       marginBottom: UI_SIZES.menuButtonMarginBottom,
-      alignSelf: 'center',
+      alignSelf: 'center' as const,
       marginLeft: UI_SIZES.menuButtonMarginHorizontal,
       marginRight: UI_SIZES.menuButtonMarginHorizontal,
     },
     menuButtonText: {
-      color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+      color: palette.buttonText,
       fontSize: 18,
       fontWeight: 'bold',
-      textAlign: 'center',
+      textAlign: 'center' as const,
     },
     answerBar: {
       height: UI_SIZES.answerBarHeight,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
       gap: UI_SIZES.answerBarGap,
       padding: UI_SIZES.answerBarPadding,
-      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
-      borderTopWidth: theme === 'rocksmith' ? 3 : 0,
-      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-      borderRadius: theme === 'rocksmith' ? 20 : 0,
-      shadowColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-      shadowOpacity: theme === 'rocksmith' ? 0.12 : 0,
-      shadowRadius: theme === 'rocksmith' ? 16 : 0,
-      shadowOffset: theme === 'rocksmith' ? { width: 0, height: 4 } : undefined,
-      elevation: theme === 'rocksmith' ? 8 : 0,
+      backgroundColor: palette.answerBarBackground,
+      borderTopWidth: 3,
+      borderColor: palette.answerBarBorderColor,
+      borderRadius: 20,
+      shadowColor: palette.answerBarShadowColor,
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 8,
       width: '100%',
     },
     resultText: {
-      color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+      color: palette.resultTextColor,
       fontWeight: 'bold',
       fontSize: 16,
       marginBottom: 6,
@@ -98,21 +98,20 @@ function getStyles(theme: 'light' | 'dark' | 'rocksmith') {
       margin: UI_SIZES.noteButtonMargin,
       minWidth: UI_SIZES.noteButtonMinWidth,
       minHeight: UI_SIZES.noteButtonMinHeight,
-      backgroundColor: theme === 'rocksmith' ? '#232526' : '#74512D',
-      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-      borderWidth: theme === 'rocksmith' ? 2 : 0,
+      backgroundColor: palette.noteButtonBackground,
+      borderColor: palette.noteButtonBorderColor,
+      borderWidth: 2,
       borderRadius: UI_SIZES.noteButtonBorderRadius,
       paddingHorizontal: UI_SIZES.noteButtonPaddingHorizontal,
       paddingVertical: UI_SIZES.noteButtonPaddingVertical,
     },
     noteButtonText: {
-      color: theme === 'rocksmith' ? '#FFD900' : '#F8F4E1',
+      color: palette.noteButtonText,
       fontWeight: 'bold',
       fontSize: UI_SIZES.noteButtonFontSize,
     },
   });
 }
-
 
 // Animated feedback component for result icon
 const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMessage }) => {
@@ -149,7 +148,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
       top: '45%',
       left: 0,
       right: 0,
-      alignItems: 'center',
+      alignItems: 'center' as const,
       zIndex: 100,
       opacity,
       pointerEvents: 'none',
@@ -161,7 +160,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
-          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#2E7D2E', textAlign: 'center' }}>✓</Text>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#2E7D2E', textAlign: 'center' as const }}>✓</Text>
         </View>
       ) : resultMessage === '❌' ? (
         <View style={{
@@ -170,7 +169,7 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
           paddingHorizontal: 28,
           paddingVertical: 14,
         }}>
-          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' }}>✖</Text>
+          <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' as const }}>✖</Text>
         </View>
       ) : null }
     </Animated.View>
@@ -178,12 +177,82 @@ const AnimatedFeedback: React.FC<{ resultMessage: string | null }> = ({ resultMe
   return null
 }
 
-
-import { ThemeContext } from './_layout';
-
 export function FretboarderAppScreen() {
-  const { theme, setTheme } = React.useContext(ThemeContext);
-  const styles = getStyles(theme);
+  const ALL_CHROMATIC_NOTES_ORDERED = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+  const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
+
+const getStyles = (themeName: ThemeName, palette: ThemePalette) => {
+    const styleConfig = {
+      root: {
+        flex: 1,
+        backgroundColor: palette.background,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+      } as ViewStyle,
+      fretboardContainer: {
+        flex: 1,
+        width: '100%',
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        backgroundColor: palette.background, // Use main screen background
+      } as ViewStyle,
+      menuButton: {
+        borderColor: palette.primary,
+        backgroundColor: palette.button,
+        padding: 10,
+        marginVertical: 5,
+        borderRadius: 5,
+        alignItems: 'center' as const,
+      } as ViewStyle,
+      menuButtonText: {
+        color: palette.buttonText,
+        fontSize: 16,
+        fontWeight: 'bold',
+      } as TextStyle,
+      answerBar: {
+        height: UI_SIZES.answerBarHeight,
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
+        gap: UI_SIZES.answerBarGap,
+        padding: UI_SIZES.answerBarPadding,
+        backgroundColor: palette.answerBarBackground,
+        borderTopWidth: 3,
+        borderColor: palette.answerBarBorderColor,
+        borderRadius: 20,
+        shadowColor: palette.answerBarShadowColor,
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 8,
+        width: '100%',
+      } as ViewStyle,
+      resultText: {
+        color: palette.resultTextColor,
+        fontWeight: 'bold',
+        fontSize: 16,
+        marginBottom: 6,
+      } as TextStyle,
+      noteButton: {
+        margin: UI_SIZES.noteButtonMargin,
+        minWidth: UI_SIZES.noteButtonMinWidth,
+        minHeight: UI_SIZES.noteButtonMinHeight,
+        backgroundColor: palette.noteButtonBackground,
+        borderColor: palette.noteButtonBorderColor,
+        borderWidth: 2,
+        borderRadius: UI_SIZES.noteButtonBorderRadius,
+        paddingHorizontal: UI_SIZES.noteButtonPaddingHorizontal,
+        paddingVertical: UI_SIZES.noteButtonPaddingVertical,
+      } as ViewStyle,
+      noteButtonText: {
+        color: palette.noteButtonText,
+        fontWeight: 'bold',
+        fontSize: UI_SIZES.noteButtonFontSize,
+      } as TextStyle,
+    };
+    return StyleSheet.create(styleConfig);
+  };
+
+  const styles = getStyles(themeName, palette);
   const [currentScreen, setScreen] = React.useState('menu'); // 'menu', 'free', 'campaign', 'settings', 'profile'
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
@@ -204,12 +273,15 @@ export function FretboarderAppScreen() {
   // Screen orientation effect
   React.useEffect(() => {
     async function changeScreenOrientation() {
-      if (currentScreen === 'free') {
-        console.log('Locking to LANDSCAPE_RIGHT for game modes');
+      if (currentScreen === 'free' || currentScreen === 'campaign') { // Added campaign here as well
+        console.log('Locking to LANDSCAPE_RIGHT for game modes (free/campaign)');
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT).catch(e => console.error('Failed to lock game mode orientation:', e));
-      } else if (currentScreen === 'settings' || currentScreen === 'menu') {
-        console.log('Locking to PORTRAIT_UP for settings or menu');
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(e => console.error('Failed to lock settings/menu orientation:', e));
+      } else if (currentScreen === 'menu') {
+        console.log('Unlocking orientation for menu screen');
+        await ScreenOrientation.unlockAsync().catch(e => console.error('Failed to unlock for menu:', e));
+      } else if (currentScreen === 'settings') {
+        console.log('Locking to PORTRAIT_UP for settings');
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(e => console.error('Failed to lock settings orientation:', e));
       } else {
         console.log('Unlocking orientation for any other screens');
         await ScreenOrientation.unlockAsync().catch(e => console.error('Failed to unlock orientation for other screens:', e));
@@ -399,7 +471,7 @@ const NOTE_NAMES = (
     }
     return (
       <View style={styles.root}>
-        <View style={[styles.fretboardContainer, theme === 'rocksmith' && { backgroundColor: '#181A1B' }]}>
+        <View style={[styles.fretboardContainer, themeName === 'rocksmith' && { backgroundColor: '#181A1B' }]}>
           {/* Result Box Modal */}
           {gameOver && (
             <View style={{
@@ -409,15 +481,15 @@ const NOTE_NAMES = (
               right: 0,
               bottom: 0,
               backgroundColor: 'rgba(0,0,0,0.45)',
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: 'center' as const,
+              justifyContent: 'center' as const,
               zIndex: 999,
             }}>
               <View style={{
-                backgroundColor: theme === 'rocksmith' ? '#232526' : '#fffbe8',
+                backgroundColor: themeName === 'rocksmith' ? '#232526' : '#fffbe8',
                 borderRadius: 24,
                 padding: 32,
-                alignItems: 'center',
+                alignItems: 'center' as const,
                 shadowColor: '#000',
                 shadowOpacity: 0.13,
                 shadowRadius: 16,
@@ -426,21 +498,21 @@ const NOTE_NAMES = (
                 minWidth: 280,
                 maxWidth: 340,
               }}>
-                <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 10 }}>Game Over</Text>
-                <Text style={{ fontSize: 26, fontWeight: 'bold', color: theme === 'rocksmith' ? '#FFD900' : '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
-                <Text style={{ fontSize: 18, color: theme === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 20, textAlign: 'center' }}>{performanceMsg}</Text>
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 10 }}>Game Over</Text>
+                <Text style={{ fontSize: 26, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
+                <Text style={{ fontSize: 18, color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 20, textAlign: 'center' as const }}>{performanceMsg}</Text>
                 {score >= 27 && selectedLevel < 12 && (
                   <Button
                     style={[
                       {
-                        backgroundColor: theme === 'rocksmith' ? (score >= 27 ? '#FFD900' : '#232526') : '#543310',
-                        borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                        borderWidth: theme === 'rocksmith' ? 2 : 0,
+                        backgroundColor: themeName === 'rocksmith' ? (score >= 27 ? '#FFD900' : '#232526') : '#543310',
+                        borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                        borderWidth: themeName === 'rocksmith' ? 2 : 0,
                         padding: 14,
                         borderRadius: 12,
                         width: 180,
                         marginBottom: 10,
-                        alignItems: 'center',
+                        alignItems: 'center' as const,
                       },
                     ]}
                     onPress={() => {
@@ -451,7 +523,7 @@ const NOTE_NAMES = (
                     }}
                   >
                     <Text style={{
-                      color: theme === 'rocksmith' ? (score >= 27 ? '#232526' : '#FFD900') : '#F8F4E1',
+                      color: themeName === 'rocksmith' ? (score >= 27 ? '#232526' : '#FFD900') : '#F8F4E1',
                       fontWeight: 'bold',
                       fontSize: 18,
                     }}>Next Level</Text>
@@ -460,15 +532,15 @@ const NOTE_NAMES = (
                 <Button
                   style={[
                     {
-                      backgroundColor: theme === 'rocksmith' ? '#232526' : '#2ecc40',
-                      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                      borderWidth: theme === 'rocksmith' ? 2 : 0,
+                      backgroundColor: themeName === 'rocksmith' ? '#232526' : '#2ecc40',
+                      borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                      borderWidth: themeName === 'rocksmith' ? 2 : 0,
                       padding: 14,
                       borderRadius: 12,
                       width: 180,
                       marginTop: 4,
                       marginBottom: 10,
-                      alignItems: 'center',
+                      alignItems: 'center' as const,
                     },
                   ]}
                   onPress={() => {
@@ -483,7 +555,7 @@ const NOTE_NAMES = (
                   }}
                 >
                   <Text style={{
-                    color: theme === 'rocksmith' ? '#FFD900' : '#fff',
+                    color: themeName === 'rocksmith' ? '#FFD900' : '#fff',
                     fontWeight: 'bold',
                     fontSize: 18,
                   }}>Play Again</Text>
@@ -491,14 +563,14 @@ const NOTE_NAMES = (
                 <Button
                   style={[
                     {
-                      backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
-                      borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                      borderWidth: theme === 'rocksmith' ? 2 : 0,
+                      backgroundColor: themeName === 'rocksmith' ? '#232526' : '#AF8F6F',
+                      borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                      borderWidth: themeName === 'rocksmith' ? 2 : 0,
                       padding: 14,
                       borderRadius: 12,
                       width: 180,
                       marginTop: 6,
-                      alignItems: 'center',
+                      alignItems: 'center' as const,
                     },
                   ]}
                   onPress={() => {
@@ -508,7 +580,7 @@ const NOTE_NAMES = (
                   }}
                 >
                   <Text style={{
-                    color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+                    color: themeName === 'rocksmith' ? '#FFD900' : '#543310',
                     fontWeight: 'bold',
                     fontSize: 18,
                   }}>Back to Menu</Text>
@@ -518,6 +590,51 @@ const NOTE_NAMES = (
           )}
           {/* Floating Menu/Reset Buttons - Top Left */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
+            {/* Reset Button - Always visible during gameplay */}
+            <Button
+              style={[
+                styles.menuButton, // Base style from menuButton for consistency in size/padding
+                {
+                  minWidth: 80,
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  height: undefined,
+                  alignItems: 'center' as const,
+                  justifyContent: 'center' as const,
+                  backgroundColor: palette.notification, // Use notification color for visibility
+                  borderColor: palette.primary, // Use primary for border
+                  borderWidth: 2,
+                  marginLeft: 0, // Override default menuButton margins if any
+                  marginRight: 0,
+                  marginBottom: 0,
+                },
+              ]}
+              onPress={() => {
+                setScore(0);
+                setNumberOfPositions(30);
+                const currentDifficultyForReset = campaignMode ? selectedLevel - 1 : difficulty;
+                setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficultyForReset < 0 ? 0 : currentDifficultyForReset));
+                setNoteQueue([]);
+                setLastCorrectNote(null);
+                setLastIncorrectNote(null);
+                setResultMessage(null);
+              }}
+            >
+              <Text
+                style={[
+                  styles.menuButtonText, // Base text style
+                  {
+                    fontSize: 16,
+                    color: palette.buttonText, // Use standard button text color
+                  },
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                Reset
+              </Text>
+            </Button>
+
             {campaignMode && (
               <Button
                 style={[
@@ -527,11 +644,11 @@ const NOTE_NAMES = (
                     paddingVertical: 6,
                     paddingHorizontal: 12,
                     height: undefined,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
-                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                    alignItems: 'center' as const,
+                    justifyContent: 'center' as const,
+                    backgroundColor: themeName === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: themeName === 'rocksmith' ? 2 : 0,
                   },
                 ]}
                 onPress={() => setScreen('campaign')}
@@ -541,7 +658,7 @@ const NOTE_NAMES = (
                     styles.menuButtonText,
                     {
                       fontSize: 16,
-                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                      color: themeName === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
                     },
                   ]}
                   numberOfLines={1}
@@ -560,11 +677,11 @@ const NOTE_NAMES = (
                     paddingVertical: 6,
                     paddingHorizontal: 12,
                     height: undefined,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
-                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                    alignItems: 'center' as const,
+                    justifyContent: 'center' as const,
+                    backgroundColor: themeName === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: themeName === 'rocksmith' ? 2 : 0,
                   },
                 ]}
                 onPress={() => setScreen('menu')}
@@ -574,7 +691,7 @@ const NOTE_NAMES = (
                     styles.menuButtonText,
                     {
                       fontSize: 16,
-                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                      color: themeName === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
                     },
                   ]}
                   numberOfLines={1}
@@ -595,11 +712,11 @@ const NOTE_NAMES = (
                     paddingVertical: 6,
                     paddingHorizontal: 12,
                     height: undefined,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
-                    borderColor: theme === 'rocksmith' ? '#FFD900' : undefined,
-                    borderWidth: theme === 'rocksmith' ? 2 : 0,
+                    alignItems: 'center' as const,
+                    justifyContent: 'center' as const,
+                    backgroundColor: themeName === 'rocksmith' ? '#232526' : styles.menuButton.backgroundColor,
+                    borderColor: themeName === 'rocksmith' ? '#FFD900' : undefined,
+                    borderWidth: themeName === 'rocksmith' ? 2 : 0,
                   },
                 ]}
                 onPress={() => {
@@ -613,7 +730,7 @@ const NOTE_NAMES = (
                     styles.menuButtonText,
                     {
                       fontSize: 16,
-                      color: theme === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
+                      color: themeName === 'rocksmith' ? '#FFD900' : styles.menuButtonText.color,
                     },
                   ]}
                   numberOfLines={1}
@@ -629,18 +746,18 @@ const NOTE_NAMES = (
             position: 'absolute', 
             top: 10, 
             right: 10, 
-            backgroundColor: theme === 'rocksmith' ? '#232526' : '#74512D',
+            backgroundColor: themeName === 'rocksmith' ? '#232526' : '#74512D',
             paddingVertical: 6,
             paddingHorizontal: 12,
             borderRadius: 8,
-            borderWidth: theme === 'rocksmith' ? 2 : 1,
-            borderColor: theme === 'rocksmith' ? '#FFD900' : '#543310',
-            flexDirection: 'row',
-            alignItems: 'center',
+            borderWidth: themeName === 'rocksmith' ? 2 : 1,
+            borderColor: themeName === 'rocksmith' ? '#FFD900' : '#543310',
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
             zIndex: 20
           }}>
             <Text style={{ 
-              color: theme === 'rocksmith' ? '#FFD900' : "#F8F4E1", 
+              color: themeName === 'rocksmith' ? '#FFD900' : "#F8F4E1", 
               fontWeight: 'bold', 
               fontSize: 18, 
               marginRight: 8, 
@@ -656,19 +773,19 @@ const NOTE_NAMES = (
               top: 50, 
               left: 0,
               right: 0,
-              flexDirection: 'row', 
+              flexDirection: 'row' as const, 
               flexWrap: 'wrap',    
-              justifyContent: 'space-around', 
-              alignItems: 'center',
+              justifyContent: 'space-around' as const, 
+              alignItems: 'center' as const,
               paddingVertical: 3,  
               paddingHorizontal: 5,
               backgroundColor: 'rgba(175, 143, 111, 0.9)', 
               zIndex: 15, 
               gap: 4, 
             }}>
-              <View style={{ alignItems: 'center' }}> {/* Manual Mode Toggle */}
+              <View style={{ alignItems: 'center' as const }}> {/* Manual Mode Toggle */}
                 <Text style={{ color: '#543310', marginBottom: 1, fontSize: 10 }}>Manual</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const }}>
                   <Button
                     style={{ backgroundColor: manualMode ? '#543310' : '#74512D', paddingVertical: 4, paddingHorizontal: 6, minWidth: 40 }}
                     onPress={() => {
@@ -685,9 +802,9 @@ const NOTE_NAMES = (
                   </Button>
                 </View>
               </View>
-              <View style={{ alignItems: 'center' }}> {/* String Controls */}
+              <View style={{ alignItems: 'center' as const }}> {/* String Controls */}
                 <Text style={{ color: '#543310', marginBottom: 1, fontSize: 10 }}>String</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const }}>
                   <Button
                     style={{ backgroundColor: '#74512D', paddingVertical: 4, paddingHorizontal: 8 }}
                     onPress={() => {
@@ -711,9 +828,9 @@ const NOTE_NAMES = (
                   </Button>
                 </View>
               </View>
-              <View style={{ alignItems: 'center' }}> {/* Fret Controls */}
+              <View style={{ alignItems: 'center' as const }}> {/* Fret Controls */}
                 <Text style={{ color: '#543310', marginBottom: 1, fontSize: 10 }}>Fret</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const }}>
                   <Button
                     style={{ backgroundColor: '#74512D', paddingVertical: 4, paddingHorizontal: 8 }}
                     onPress={() => {
@@ -737,9 +854,9 @@ const NOTE_NAMES = (
                   </Button>
                 </View>
               </View>
-              <View style={{ alignItems: 'center' }}> {/* V-Offset Controls */}
+              <View style={{ alignItems: 'center' as const }}> {/* V-Offset Controls */}
                 <Text style={{ color: '#543310', marginBottom: 1, fontSize: 10 }}>V-Off</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const }}>
                   <Button
                     style={{ backgroundColor: '#74512D', paddingVertical: 4, paddingHorizontal: 8 }}
                     onPress={() => {
@@ -763,9 +880,9 @@ const NOTE_NAMES = (
                   </Button>
                 </View>
               </View>
-              <View style={{ alignItems: 'center' }}> {/* H-Offset Controls */}
+              <View style={{ alignItems: 'center' as const }}> {/* H-Offset Controls */}
                 <Text style={{ color: '#543310', marginBottom: 1, fontSize: 10 }}>H-Off</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const }}>
                   <Button
                     style={{ backgroundColor: '#74512D', paddingVertical: 4, paddingHorizontal: 8 }}
                     onPress={() => {
@@ -790,8 +907,8 @@ const NOTE_NAMES = (
                 </View>
               </View>
               {/* Inserted Current Note Display */}
-              <View style={{ alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8, backgroundColor: theme === 'rocksmith' ? '#333' : '#E0E0E0', borderRadius: 4, minWidth: 150, justifyContent: 'center', marginTop: 4 }}>
-                <Text style={{ color: theme === 'rocksmith' ? '#FFF' : '#000', fontSize: UI_SIZES.noteButtonFontSize - 2 }}>
+              <View style={{ alignItems: 'center' as const, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: palette.fretboardBackground, borderRadius: 4, minWidth: 150, justifyContent: 'center' as const, marginTop: 4 }}>
+                <Text style={{ color: palette.buttonText, fontSize: UI_SIZES.noteButtonFontSize - 2 }}>
                   Current: {manualDot ? `${manualDot[2]} (S:${manualDot[3]+1} F:${manualDot[4]})` : 'N/A'}
                 </Text>
               </View>
@@ -799,13 +916,13 @@ const NOTE_NAMES = (
           )}
           {/* Answer bar (note buttons) */}
           <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20 }]}> 
-            <View style={{ width: '100%', alignItems: 'center', marginBottom: 2 }}>
-              <Text style={{ color: "#FFFFFF", fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>
+            <View style={{ width: '100%', alignItems: 'center' as const, marginBottom: 2 }}>
+              <Text style={{ color: palette.text, fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>
                 Guesses left: {numberOfPositions} | Current Note: {noteDot[2]} | String: {noteDot[3]+1} Fret: {noteDot[4]}
               </Text>
             </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' }}>
-              {NOTE_NAMES.map((note: string)  => (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' as const }}>
+              {ALL_CHROMATIC_NOTES_ORDERED.map((note: string)  => (
                 <Button
                   disabled={numberOfPositions === 0}
                   key={note}
@@ -855,14 +972,15 @@ const NOTE_NAMES = (
             </View>
           </View>
           {/* Fretboard, slightly bigger height for better fit */}
-          <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginTop: 10, marginBottom: 20 }}>
+          <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center' as const, marginTop: 10, marginBottom: 20 }}>
             <Fretboard
               frets={frets}
               strings={strings}
               fretboardHeight={fretboardHeight}
               noteDot={noteDot}
               difficulty={difficulty}
-             
+              themeName={themeName}
+              palette={palette}
             />
           </View>
         </View>
@@ -876,22 +994,22 @@ const NOTE_NAMES = (
     if (!authChecked || !user) {
       // Loading state or if user is null
       return (
-        <View style={theme === 'rocksmith' ? styles.root : { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F4E1' }}>
-          <Text style={theme === 'rocksmith' ? { fontSize: 18, color: styles.menuButtonText.color } : { fontSize: 18, color: '#543310' }}>Loading profile...</Text>
+        <View style={themeName === 'rocksmith' ? styles.root : { flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const, backgroundColor: '#F8F4E1' }}>
+          <Text style={themeName === 'rocksmith' ? { fontSize: 18, color: styles.menuButtonText.color } : { fontSize: 18, color: '#543310' }}>Loading profile...</Text>
         </View>
       );
     }
 
     return (
-      <View style={theme === 'rocksmith' ? styles.root : { backgroundColor: '#F8F4E1', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <View style={theme === 'rocksmith' ?
-          [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center', minWidth: 320, maxWidth: 380, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
+      <View style={themeName === 'rocksmith' ? styles.root : { backgroundColor: '#F8F4E1', flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const }}>
+        <View style={themeName === 'rocksmith' ?
+          [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center' as const, minWidth: 320, maxWidth: 380, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
           :
           {
             backgroundColor: '#E0C097', // Light wood color for the card
             borderRadius: 16,
             padding: 32,
-            alignItems: 'center',
+            alignItems: 'center' as const,
             shadowColor: '#000',
             shadowOpacity: 0.10,
             shadowRadius: 16,
@@ -904,27 +1022,27 @@ const NOTE_NAMES = (
           {/* Profile avatar/icon */}
           <View style={{
             width: 80, height: 80, borderRadius: 40,
-            backgroundColor: theme === 'rocksmith' ? '#3a3d3e' : '#AF8F6F',
-            alignItems: 'center', justifyContent: 'center', marginBottom: 18, borderWidth: 2,
-            borderColor: theme === 'rocksmith' ? (styles.menuButton.borderColor || '#FFD900') : '#74512D',
+            backgroundColor: themeName === 'rocksmith' ? '#3a3d3e' : '#AF8F6F',
+            alignItems: 'center' as const, justifyContent: 'center' as const, marginBottom: 18, borderWidth: 2,
+            borderColor: themeName === 'rocksmith' ? (styles.menuButton.borderColor || '#FFD900') : '#74512D',
           }}>
-            <Text style={{ fontSize: 40, color: theme === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#F8F4E1', fontWeight: 'bold' }}>
+            <Text style={{ fontSize: 40, color: themeName === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#F8F4E1', fontWeight: 'bold' }}>
               {user?.email ? user.email[0].toUpperCase() : 'U'}
             </Text>
           </View>
           {/* Profile title */}
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#543310', marginBottom: 10, letterSpacing: 1 }}>User Profile</Text>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: themeName === 'rocksmith' ? (styles.menuButtonText.color || '#FFD900') : '#543310', marginBottom: 10, letterSpacing: 1 }}>User Profile</Text>
           {/* Display name */}
           <Text style={{
             fontSize: 20,
-            color: theme === 'rocksmith' ? '#FFFFFF' : '#543310',
+            color: palette.text,
             fontWeight: '600',
             marginBottom: 8,
-            backgroundColor: theme === 'rocksmith' ? 'transparent' : '#F8F4E1',
+            backgroundColor: themeName === 'rocksmith' ? 'transparent' : '#F8F4E1',
             paddingVertical: 8, 
             paddingHorizontal: 12, 
             borderRadius: 8,
-            textAlign: theme === 'rocksmith' ? 'center' : 'left', 
+            textAlign: themeName === 'rocksmith' ? 'center' : 'left', 
             minWidth: 200, 
           }}>
             {user?.displayName || 'No display name set'}
@@ -932,20 +1050,20 @@ const NOTE_NAMES = (
           {/* Email */}
           <Text style={{
             fontSize: 18,
-            color: theme === 'rocksmith' ? '#DDDDDD' : '#74512D',
+            color: themeName === 'rocksmith' ? '#DDDDDD' : palette.textSecondary,
             fontWeight: '600',
             marginBottom: 24,
-            backgroundColor: theme === 'rocksmith' ? 'transparent' : '#F8F4E1',
+            backgroundColor: themeName === 'rocksmith' ? 'transparent' : '#F8F4E1',
             paddingVertical: 8, 
             paddingHorizontal: 12, 
             borderRadius: 8,
-            textAlign: theme === 'rocksmith' ? 'center' : 'left', 
+            textAlign: themeName === 'rocksmith' ? 'center' : 'left', 
             minWidth: 200, 
           }}>
             {user?.email || 'N/A'}
           </Text>
           <Button
-            style={theme === 'rocksmith' ?
+            style={themeName === 'rocksmith' ?
               [styles.menuButton, { width: 180, marginTop: 4, marginBottom: 8, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
               :
               { backgroundColor: "#74512D", padding: 14, borderRadius: 12, width: 180, marginTop: 4, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
@@ -969,17 +1087,17 @@ const NOTE_NAMES = (
               );
             }}
           >
-            <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
+            <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
           </Button>
           <Button
-            style={theme === 'rocksmith' ?
+            style={themeName === 'rocksmith' ?
               [styles.menuButton, { width: 180, marginTop: 8, marginBottom: 0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
               :
               { backgroundColor: "#AF8F6F", padding: 14, borderRadius: 12, width: 180, marginTop: 16, shadowColor: '#74512D', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
             }
             onPress={() => setScreen('menu')}
           >
-            <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
+            <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
           </Button>
         </View>
       </View>
@@ -1002,16 +1120,16 @@ const NOTE_NAMES = (
         onSettings={() => setScreen('settings')}
         // Add a Profile button to the menu
         extraButtons={
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          <View style={{ flexDirection: 'row' as const, gap: 12, marginTop: 16 }}>
             <Button
-              style={theme === 'rocksmith' ? 
+              style={themeName === 'rocksmith' ? 
                 [styles.menuButton, { marginBottom: 0, marginLeft:0, marginRight:0, paddingHorizontal: UI_SIZES.menuButtonPaddingHorizontal / 2, paddingVertical: UI_SIZES.menuButtonPaddingVertical / 2, minWidth: 110 }] 
                 : 
                 { backgroundColor: "#AF8F6F", padding: 12, borderRadius: 8, minWidth: 110 }
               }
               onPress={() => setScreen('profile')}
             >
-              <Text style={theme === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold" }}>Profile</Text>
+              <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold" }}>Profile</Text>
             </Button>
             <Button
               style={{ backgroundColor: "#b22222", padding: 12, borderRadius: 8, minWidth: 110 }}
