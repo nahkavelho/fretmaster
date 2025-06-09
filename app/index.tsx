@@ -288,6 +288,20 @@ export function FretboarderAppScreen() {
     setSelectedLevel(level)
   }
 
+  React.useEffect(() => {
+    if (currentScreen === 'free') {
+      console.log(`Resetting game for 'free' screen. Campaign Mode: ${campaignMode}, Selected Level: ${selectedLevel}, Difficulty: ${difficulty}`);
+      setScore(0);
+      setNumberOfPositions(30);
+      const currentDifficulty = campaignMode ? selectedLevel - 1 : difficulty;
+      setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficulty < 0 ? 0 : currentDifficulty)); // Ensure difficulty isn't negative
+      setNoteQueue([]);
+      setLastCorrectNote(null);
+      setLastIncorrectNote(null);
+      setResultMessage(null);
+    }
+  }, [currentScreen, campaignMode, selectedLevel, difficulty, fretboardHeight]);
+
   const ManageResultMessage = (message: string) => {
     setResultMessage(message)
     if (message === '✅') {
@@ -340,7 +354,7 @@ const NOTE_NAMES = (
     return (
       <Campaign
         onBack={() => setScreen('menu')}
-        onLevelSelect={(level) => { setCurrentLevel(level); setCampaignMode(true); setScreen('free');}}
+        onLevelSelect={(level) => { setCurrentLevel(level); setSelectedLevel(level); setCampaignMode(true); setScreen('free');}}
         unlockedLevel={unlockedLevel}
         score={score}
       />
@@ -373,8 +387,14 @@ const NOTE_NAMES = (
       else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
       else performanceMsg = 'Keep practicing! You can do it!';
       // Unlock next level if passed threshold (27)
-      if (score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 12) {
-        setUnlockedLevel(unlockedLevel + 1);
+      if (campaignMode && score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 12) {
+        const newUnlockedLevel = unlockedLevel + 1;
+        setUnlockedLevel(newUnlockedLevel);
+        if (user) {
+          saveUserLevel(user.uid, newUnlockedLevel)
+            .then(() => console.log(`Level ${newUnlockedLevel} unlocked and saved for user ${user.uid}`))
+            .catch((err: Error) => console.error("Failed to save unlocked level:", err));
+        }
       }
     }
     return (
@@ -424,12 +444,10 @@ const NOTE_NAMES = (
                       },
                     ]}
                     onPress={() => {
-                      // Aloita seuraava taso
-                      setDifficulty(selectedLevel); // seuraava level (index)
-                      setSelectedLevel(selectedLevel + 1);
-                      setNumberOfPositions(30);
-                      setScore(0);
-                      setNoteDot(GenDotList(fretboardHeight, strings.length, selectedLevel));
+                      // setSelectedLevel will trigger the useEffect to reset the game for the next level
+                      if (selectedLevel < 12) { // Ensure we don't go beyond max level
+                        setSelectedLevel(selectedLevel + 1);
+                      }
                     }}
                   >
                     <Text style={{
@@ -454,9 +472,14 @@ const NOTE_NAMES = (
                     },
                   ]}
                   onPress={() => {
-                    setNoteDot(GenDotList(fretboardHeight, strings.length, difficulty));
                     setScore(0);
-                    setNumberOfPositions(30);
+                    setNumberOfPositions(30); // This hides the modal as gameOver becomes false
+                    const currentDifficultyForReset = campaignMode ? selectedLevel - 1 : difficulty;
+                    setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficultyForReset < 0 ? 0 : currentDifficultyForReset));
+                    setNoteQueue([]); // Clear any queued notes
+                    setLastCorrectNote(null); // Clear last correct note feedback
+                    setLastIncorrectNote(null); // Clear last incorrect note feedback
+                    setResultMessage(null); // Clear any general result message
                   }}
                 >
                   <Text style={{
@@ -786,61 +809,39 @@ const NOTE_NAMES = (
                 <Button
                   disabled={numberOfPositions === 0}
                   key={note}
-                  onPress={async () => {
-                    setLastCorrectNote(noteDot[2]); // Always highlight the correct answer
+                  onPress={() => {
+                    setLastCorrectNote(noteDot[2]); // Always highlight the correct answer for feedback
                     if (lastCorrectTimeout.current) clearTimeout(lastCorrectTimeout.current);
                     lastCorrectTimeout.current = setTimeout(() => setLastCorrectNote(null), 500);
-                    if (noteDot[2] === note) {
-                      ManageResultMessage("✅")
-                      setNoteDot(
-                        manualMode 
-                          ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                          : GenDotList(fretboardHeight, strings.length, difficulty)
-                      )
-                      const newScore = score + 1;
-                      // setScore(newScore); // Score is set below based on level completion
-                      // setNumberOfPositions(numberOfPositions - 1); // Positions are set below
 
-                      if (campaignMode && newScore >= 5) { // Level completed (TESTING: 5)
-                        if (user) {
-                          // Save the completed level (difficulty is 0-indexed)
-                          await saveUserLevel(user.uid, difficulty);
-                        }
-                        // Advance to the next level
-                        const nextDifficulty = difficulty + 1;
-                        setDifficulty(nextDifficulty);
-                        setCurrentLevel(nextDifficulty + 1); // Update UI facing level
-                        setSelectedLevel(nextDifficulty + 1);
-                        if (nextDifficulty + 1 > unlockedLevel) {
-                           setUnlockedLevel(nextDifficulty + 1); // Unlock next level
-                        }
-                        setScore(0); // Reset score for the new level
-                        setNumberOfPositions(30); // Reset positions for the new level
-                        // Generate a new dot for the new level
-                        setNoteDot(GenDotList(fretboardHeight, strings.length, nextDifficulty));
-                        ManageResultMessage(`Level ${difficulty + 1} Cleared!`); // +1 for 1-indexed display
-                      } else {
-                        // Level not yet complete, just get a new dot for the current difficulty
-                        setScore(newScore); // Update score for current attempt
-                        setNumberOfPositions(numberOfPositions - 1); // Decrement positions for current attempt
-                        setNoteDot(
-                          manualMode 
-                            ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                            : GenDotList(fretboardHeight, strings.length, difficulty)
-                        );
-                      }
-                    } else {
-                      setLastIncorrectNote(note); // Highlight incorrect note
+                    // Determine the correct difficulty for note generation based on current mode
+                    const currentNoteGenDifficulty = campaignMode 
+                      ? (selectedLevel - 1) // 0-indexed difficulty for campaign
+                      : difficulty;         // 0-indexed difficulty for free mode
+                    
+                    // Pre-calculate the next note dot.
+                    // manualMode check allows for debugging even during active play if desired.
+                    const nextNoteDot = manualMode
+                      ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
+                      : GenDotList(fretboardHeight, strings.length, currentNoteGenDifficulty < 0 ? 0 : currentNoteGenDifficulty);
+
+                    if (noteDot[2] === note) { // CORRECT answer
+                      ManageResultMessage("✅");
+                      setScore(score + 1);
+                      setNumberOfPositions(numberOfPositions - 1);
+                      setNoteDot(nextNoteDot); // Set the pre-calculated next note
+                    } else { // INCORRECT answer
+                      setLastIncorrectNote(note); // Highlight the user's incorrect guess
                       if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
                       lastIncorrectTimeout.current = setTimeout(() => setLastIncorrectNote(null), 500);
-                      ManageResultMessage("❌")
-                      setNoteDot(
-                        manualMode 
-                          ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                          : GenDotList(fretboardHeight, strings.length, difficulty)
-                      );
+                      
+                      ManageResultMessage("❌");
                       setNumberOfPositions(numberOfPositions - 1);
+                      setNoteDot(nextNoteDot); // Set the pre-calculated next note (game gives a new note on incorrect)
                     }
+                    // Premature level advancement logic removed.
+                    // Game will continue until numberOfPositions is 0.
+                    // Level completion, unlocking, and advancement are handled by the game over modal logic.
                   }}
                   style={[
                     styles.noteButton,
