@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Switch, ScrollView, useWindowDimensions } from 
 import Button from "../../components/ui/button";
 import { Picker } from '@react-native-picker/picker';
 
-import { ThemeContext } from '../_layout';
+import { ThemeContext, THEME_PALETTES, ThemeName, ThemePalette } from '../ThemeContext';
 
 interface SettingsProps {
   onBack: () => void;
@@ -13,15 +13,15 @@ interface SettingsProps {
   setDifficulty: (value: number) => void;
 }
 
-const styles = (theme: 'light' | 'dark' | 'rocksmith') => StyleSheet.create({
+const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme === 'rocksmith' ? '#181A1B' : theme === 'dark' ? '#232526' : '#F8F4E1',
+    backgroundColor: palette.background,
     paddingHorizontal: 24,
     paddingTop: 48,
   },
   title: {
-    color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+    color: themeName === 'rocksmith' ? palette.primary : palette.text,
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 32,
@@ -34,31 +34,31 @@ const styles = (theme: 'light' | 'dark' | 'rocksmith') => StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: theme === 'rocksmith' ? '#232526' : '#AF8F6F',
+    backgroundColor: palette.modalBackground, // Or a more specific color like card
     borderRadius: 8,
-    borderWidth: theme === 'rocksmith' ? 2 : 0,
-    borderColor: theme === 'rocksmith' ? '#FFD900' : 'transparent',
-    shadowColor: theme === 'rocksmith' ? '#000' : '#543310',
-    shadowOpacity: theme === 'rocksmith' ? 0.4 : 0.2,
+    borderWidth: themeName === 'rocksmith' ? 2 : 0,
+    borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent',
+    shadowColor: palette.text, // Or a dedicated shadow color from palette
+    shadowOpacity: palette.background === THEME_PALETTES.rocksmith.background ? 0.4 : 0.2, // Example conditional based on a known palette color
     shadowRadius: 4,
     elevation: 3,
   },
   settingLabel: {
-    color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+    color: themeName === 'rocksmith' ? palette.primary : palette.text,
     fontSize: 18,
     fontWeight: '600',
   },
   settingDescription: {
-    color: theme === 'rocksmith' ? '#FFF' : '#543310',
+    color: palette.text,
     fontSize: 14,
     marginTop: 4,
     opacity: 0.8,
     maxWidth: '80%',
   },
   backButton: {
-    backgroundColor: theme === 'rocksmith' ? '#232526' : '#74512D',
-    borderColor: theme === 'rocksmith' ? '#FFD900' : 'transparent',
-    borderWidth: theme === 'rocksmith' ? 2 : 0,
+    backgroundColor: palette.button,
+    borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent',
+    borderWidth: themeName === 'rocksmith' ? 2 : 0,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
@@ -66,35 +66,35 @@ const styles = (theme: 'light' | 'dark' | 'rocksmith') => StyleSheet.create({
     marginTop: 32,
   },
   backButtonText: {
-    color: theme === 'rocksmith' ? '#FFD900' : '#F8F4E1',
+    color: palette.buttonText,
     fontSize: 18,
     fontWeight: 'bold',
   },
   picker: {
-    backgroundColor: theme === 'rocksmith' ? '#232526' : '#FFF',
-    color: theme === 'rocksmith' ? '#FFD900' : '#543310',
+    backgroundColor: palette.modalBackground, // Or card
+    color: palette.text,
     borderRadius: 8,
-    borderWidth: theme === 'rocksmith' ? 2 : 1,
-    borderColor: theme === 'rocksmith' ? '#FFD900' : '#AF8F6F',
+    borderWidth: themeName === 'rocksmith' ? 2 : 1,
+    borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
     marginVertical: 4,
   },
   switchTrack: {
-    backgroundColor: theme === 'rocksmith' ? '#444' : '#C0C0C0',
+    backgroundColor: palette.fretboardBorder, // Or a specific switch track color
   },
   switchThumb: {
-    backgroundColor: theme === 'rocksmith' ? '#FFD900' : '#FFF',
+    backgroundColor: palette.primary, // Or a specific switch thumb color
   },
 });
 
 
 const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, difficulty, setDifficulty }) => {
-  const { theme, setTheme } = React.useContext(ThemeContext);
+  const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
   const { width } = useWindowDimensions();
   const isPortrait = width < 400;
 
   const dims = useWindowDimensions();
   const isLandscape = dims.width > dims.height;
-  const s = styles(theme);
+  const s = styles(palette, themeName);
   return (
     <View style={s.container}>
       <Text style={s.title}>Settings</Text>
@@ -104,55 +104,38 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
         <View>
           <Text style={s.settingLabel}>Theme</Text>
           <Text style={s.settingDescription}>
-            Choose between light and dark mode.
+            Choose your preferred application theme.
           </Text>
         </View>
-        {/* Responsive theme button row */}
-        {/* Theme dropdown - nicer UI */}
         <View style={{ paddingHorizontal: 16, width: '100%' }}>
           <Text style={{
             fontWeight: 'bold',
             fontSize: 16,
             marginBottom: 6,
-            color: theme === 'dark' ? '#fff' : '#543310',
+            color: palette.text,
             marginLeft: 4,
           }}>
-            Valitse teema
+            Select Theme
           </Text>
           <View
             style={{
-              backgroundColor: theme === 'dark' ? '#322015' : '#fff9ef',
+              backgroundColor: palette.modalBackground, // or card
               borderRadius: 12,
               borderWidth: 1.5,
-              borderColor: theme === 'dark' ? '#F8F4E1' : '#543310',
-              shadowColor: '#000',
-              shadowOpacity: 0.08,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 2,
-              marginBottom: 14,
-              paddingHorizontal: 8,
-              justifyContent: 'center',
-              width: 90,
-              alignSelf: 'flex-start',
-            }}
-          >
+              borderColor: palette.fretboardBorder, // or a specific picker border
+              overflow: 'hidden',
+            }}>
             <Picker
-              selectedValue={theme}
-              onValueChange={(itemValue: 'light' | 'dark' | 'rocksmith') => setTheme(itemValue)}
-              style={{
-                color: theme === 'dark' ? '#fff' : '#543310',
-                fontSize: 18,
-                minHeight: 48,
-                backgroundColor: 'transparent',
-                width: 90,
-              }}
-              dropdownIconColor={theme === 'dark' ? '#fff' : '#543310'}
+              selectedValue={themeName}
+              onValueChange={(itemValue) => setThemeName(itemValue as ThemeName)}
+              style={s.picker} // s.picker already defines backgroundColor, color, etc.
+              itemStyle={{ color: palette.text }} // Ensure item text color matches theme
+              dropdownIconColor={palette.text}
               mode="dropdown"
             >
-              <Picker.Item label="Vaalea" value="light" />
-              <Picker.Item label="Tumma" value="dark" />
-              <Picker.Item label="Rocksmith" value="rocksmith" />
+              {(Object.keys(THEME_PALETTES) as ThemeName[]).map((key) => (
+                <Picker.Item key={key} label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()} value={key} />
+              ))}
             </Picker>
           </View>
         </View>
@@ -218,21 +201,21 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
                           borderRadius: 6,
                           justifyContent: 'center',
                           alignItems: 'center',
-                          borderWidth: theme === 'rocksmith' ? 2 : 1,
-                          borderColor: theme === 'rocksmith' ? '#FFD900' : '#AF8F6F',
+                          borderWidth: themeName === 'rocksmith' ? 2 : 1,
+                          borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
                           backgroundColor:
-                            theme === 'rocksmith'
-                              ? (difficulty === level ? '#FFD900' : '#232526')
-                              : (difficulty === level ? '#543310' : '#AF8F6F'),
+                            themeName === 'rocksmith'
+                              ? (difficulty === level ? palette.primary : palette.modalBackground) // Rocksmith active/inactive
+                              : (difficulty === level ? palette.button : palette.modalBackground), // Other themes active/inactive
                         },
                       ]}
                       onPress={() => setDifficulty(level)}
                     >
                       <Text style={{
                         color:
-                          theme === 'rocksmith'
-                            ? (difficulty === level ? '#232526' : '#FFD900')
-                            : '#F8F4E1',
+                          themeName === 'rocksmith'
+                            ? (difficulty === level ? palette.modalBackground : palette.primary) // Rocksmith text active/inactive
+                            : (difficulty === level ? palette.buttonText : palette.text), // Other themes text active/inactive
                         fontWeight: 'bold',
                         fontSize: 13,
                         textAlign: 'center',
@@ -256,21 +239,21 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
                             borderRadius: 6,
                             justifyContent: 'center',
                             alignItems: 'center',
-                            borderWidth: theme === 'rocksmith' ? 2 : 1,
-                            borderColor: theme === 'rocksmith' ? '#FFD900' : '#AF8F6F',
+                            borderWidth: themeName === 'rocksmith' ? 2 : 1,
+                            borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
                             backgroundColor:
-                              theme === 'rocksmith'
-                                ? (difficulty === level ? '#FFD900' : '#232526')
-                                : (difficulty === level ? '#543310' : '#AF8F6F'),
+                              themeName === 'rocksmith'
+                                ? (difficulty === level ? palette.primary : palette.modalBackground)
+                                : (difficulty === level ? palette.button : palette.modalBackground),
                           },
                         ]}
                         onPress={() => setDifficulty(level)}
                       >
                         <Text style={{
                           color:
-                            theme === 'rocksmith'
-                              ? (difficulty === level ? '#232526' : '#FFD900')
-                              : '#F8F4E1',
+                            themeName === 'rocksmith'
+                              ? (difficulty === level ? palette.modalBackground : palette.primary)
+                              : (difficulty === level ? palette.buttonText : palette.text),
                           fontWeight: 'bold',
                           fontSize: 13,
                           textAlign: 'center',
@@ -282,7 +265,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
               </>
             )}
           </View>
-          <Text style={{ color: "#543310", fontSize: 14, marginTop: 4 }}>Current Difficulty: {difficulty}</Text>
+          <Text style={{ color: palette.text, fontSize: 14, marginTop: 4 }}>Current Difficulty: {difficulty}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
         </View>   

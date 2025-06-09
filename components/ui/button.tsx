@@ -1,21 +1,21 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, StyleProp, ViewStyle } from 'react-native';
 import { TextClassContext } from '~/components/ui/text';
 import { cn } from '~/lib/utils';
 
 const buttonVariants = cva(
-  'group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
+  'group flex items-center justify-center rounded-md',
   {
     variants: {
       variant: {
-        default: 'bg-primary web:hover:opacity-90 active:opacity-90',
-        destructive: 'bg-destructive web:hover:opacity-90 active:opacity-90',
+        default: 'bg-primary active:opacity-90',
+        destructive: 'bg-destructive active:opacity-90',
         outline:
-          'border border-input bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
-        secondary: 'bg-secondary web:hover:opacity-80 active:opacity-80',
-        ghost: 'web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
-        link: 'web:underline-offset-4 web:hover:underline web:focus:underline ',
+          'border border-input bg-background active:bg-accent',
+        secondary: 'bg-secondary active:opacity-80',
+        ghost: 'active:bg-accent',
+        link: '', // Link variant might need specific native handling or be removed if not used
       },
       size: {
         default: 'h-10 px-4 py-2 native:h-12 native:px-5 native:py-3',
@@ -32,7 +32,7 @@ const buttonVariants = cva(
 );
 
 const buttonTextVariants = cva(
-  'web:whitespace-nowrap text-sm native:text-base font-medium text-foreground web:transition-colors',
+  'text-sm native:text-base font-medium text-foreground',
   {
     variants: {
       variant: {
@@ -41,7 +41,7 @@ const buttonTextVariants = cva(
         outline: 'group-active:text-accent-foreground',
         secondary: 'text-secondary-foreground group-active:text-secondary-foreground',
         ghost: 'group-active:text-accent-foreground',
-        link: 'text-primary group-active:underline',
+        link: 'text-primary',
       },
       size: {
         default: '',
@@ -60,27 +60,40 @@ const buttonTextVariants = cva(
 type ButtonProps = React.ComponentPropsWithoutRef<typeof Pressable> &
   VariantProps<typeof buttonVariants>;
 
-import { ThemeContext } from '../../app/_layout';
+import { ThemeContext } from '../../app/ThemeContext';
 
 const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
   ({ className, variant, size, children, style, ...props }, ref) => {
-    const { theme } = React.useContext(ThemeContext);
-    let bgColor = '#AF8F6F'; // light default
-    let borderColor = '#543310';
-    let textColor = '#543310';
-    if (theme === 'rocksmith') {
-      bgColor = '#232526';
-      borderColor = '#FFD900'; // yellow accent
-      textColor = '#FFF';
-    } else if (theme === 'dark') {
-      bgColor = '#333';
-      borderColor = '#888';
-      textColor = '#FFF';
+    const { themeName, palette } = React.useContext(ThemeContext);
+
+    let bgColor, borderColor, textColor;
+
+    // Base styling from palette
+    bgColor = palette.button;
+    textColor = palette.buttonText;
+    borderColor = palette.primary; // Default border to primary
+
+    // Theme-specific overrides if necessary (Rocksmith example)
+    if (themeName === 'rocksmith') {
+      // Rocksmith uses its specific button colors, primary for border is already set
+      bgColor = palette.button; // e.g., '#555'
+      borderColor = palette.primary; // Now '#FFD900' (Yellow)
+      textColor = palette.buttonText; // e.g., '#FFF'
+    } else if (themeName === 'dark') {
+      // Dark theme might use textSecondary or a specific border color for default buttons
+      borderColor = palette.textSecondary; // Example: using textSecondary for border
+    } else {
+      // Light theme might use text or a specific border color
+      borderColor = palette.text; // Example: using text for border
     }
+
+    // Destructive variant overrides
     if (variant === 'destructive') {
-      borderColor = '#FF4B4B';
-      bgColor = theme === 'rocksmith' ? '#FF4B4B' : '#C00';
-      textColor = '#FFF';
+      bgColor = palette.notification; // Use notification color for background
+      borderColor = palette.notification; // And for border
+      // Destructive text color is often white or a high-contrast color defined in palette
+      // For simplicity, let's assume destructive buttons always have white text or it's handled by palette.buttonText on a destructive-specific button color
+      textColor = '#FFFFFF'; // Or palette.destructiveButtonText if we add it
     }
     return (
       <Pressable
@@ -94,11 +107,11 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
             borderRadius: 12,
             paddingVertical: 12,
             paddingHorizontal: 24,
-            alignItems: 'center',
+            alignItems: 'center' as const,
             opacity: props.disabled ? 0.5 : 1,
           },
           style,
-        ]}
+        ] as StyleProp<ViewStyle>}
         {...props}
       >
         {typeof children === 'string' ? (
