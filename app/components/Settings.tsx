@@ -107,34 +107,24 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
             Choose your preferred application theme.
           </Text>
         </View>
-        <View style={{ paddingHorizontal: 16, width: '100%' }}>
-          <Text style={{
-            fontWeight: 'bold',
-            fontSize: 16,
-            marginBottom: 6,
-            color: palette.text,
-            marginLeft: 4,
-          }}>
-            Select Theme
-          </Text>
+        <View style={{ flex: 1, marginLeft: 16 }}>
           <View
             style={{
               backgroundColor: palette.modalBackground, // or card
               borderRadius: 12,
               borderWidth: 1.5,
-              borderColor: palette.fretboardBorder, // or a specific picker border
-              overflow: 'hidden',
+              borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+              overflow: 'hidden', // Ensures the Picker respects the border radius
             }}>
             <Picker
               selectedValue={themeName}
               onValueChange={(itemValue) => setThemeName(itemValue as ThemeName)}
-              style={s.picker} // s.picker already defines backgroundColor, color, etc.
-              itemStyle={{ color: palette.text }} // Ensure item text color matches theme
-              dropdownIconColor={palette.text}
-              mode="dropdown"
+              style={s.picker}
+              itemStyle={{ color: palette.text, backgroundColor: palette.modalBackground }}
+              dropdownIconColor={palette.primary}
             >
-              {(Object.keys(THEME_PALETTES) as ThemeName[]).map((key) => (
-                <Picker.Item key={key} label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()} value={key} />
+              {Object.keys(THEME_PALETTES).map((key) => (
+                <Picker.Item key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} value={key} />
               ))}
             </Picker>
           </View>

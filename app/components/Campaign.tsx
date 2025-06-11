@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import * as ScreenOrientation from 'expo-screen-orientation';
 import Button from "../../components/ui/button";
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -54,12 +53,6 @@ const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.cr
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  landscapeContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: palette.background,
-  },
   iconStyle: { // Added for icon color
     color: palette.icon,
   }
@@ -70,21 +63,7 @@ import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Adde
 const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
   const { themeName, palette } = React.useContext(ThemeContext);
   const styles = getStyles(themeName, palette); // Call getStyles
-  useEffect(() => {
-    const lockOrientation = async () => {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    };
 
-    const unlockOrientation = async () => {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
-    };
-
-    lockOrientation();
-
-    return () => {
-      unlockOrientation();
-    };
-  }, []);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Campaign</Text>
