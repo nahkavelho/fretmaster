@@ -8,7 +8,7 @@ interface FretDotsProps {
 }
 
 // Only display dots at 3, 5, 7, 9 (single) and 12 (double)
-const dotFrets = [3, 5, 7, 9];
+const dotFrets = [3, 5, 7, 9, 15];
 const doubleDotFrets = [12];
 
 const FretDots: React.FC<FretDotsProps> = ({ frets, fretboardHeight }) => {
