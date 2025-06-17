@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { View, Text, Alert, ViewStyle, TextStyle, Animated } from 'react-native';
+import { Audio } from 'expo-av';
 import Fretboard from "./Fretboard";
 import Button from "../../components/ui/button"; // Adjusted path to root ui components
 import GenDotList, { ManualDotPosition as ManualDotPositionFunction, NoteDot, Note } from "./DotPositions";
@@ -64,8 +65,6 @@ interface GameScreenProps {
   numberOfPositions: number;
   setNumberOfPositions: (num: number) => void;
   ManageResultMessage: (message: string) => void;
-  lastCorrectTimeout: React.MutableRefObject<NodeJS.Timeout | null>;
-  lastIncorrectTimeout: React.MutableRefObject<NodeJS.Timeout | null>;
   // UI_SIZES is imported directly
 }
 
@@ -73,49 +72,105 @@ const GameScreen: React.FC<GameScreenProps> = ({
   styles,
   themeName,
   palette,
+  currentScreen,
   setScreen,
+  loggedIn,
   user,
+  authChecked,
   campaignMode,
   setCampaignMode,
+  currentLevel,
+  setCurrentLevel,
   selectedLevel,
   setSelectedLevel,
   unlockedLevel,
   setUnlockedLevel,
   score,
   setScore,
-  resultMessage, // Added prop
+  resultMessage,
   setResultMessage,
-  feedbackAnimation, // Added prop
-  noteQueue, // Added to props
-  setNoteQueue, // Added to props
-  manualDot, // Added prop
-  manualMode, // Added to props
-  setManualMode, // Added to props
-  manualString, // Added to props
-  setManualString, // Added to props
-  manualFret, // Added to props
-  setManualFret, // Added to props
-  verticalOffset, // Added to props
-  setVerticalOffset, // Added to props
-  horizontalOffset, // Added to props
-  setHorizontalOffset, // Added to props
-  fretboardHeight,
-  noteDot,
-  setNoteDot,
-  difficulty,
-  ALL_CHROMATIC_NOTES_ORDERED,
-  frets,
-  strings,
-  numberOfPositions,
-  setNumberOfPositions,
-  ManageResultMessage,
+  feedbackAnimation,
+  noteQueue,
+  setNoteQueue,
+  manualDot,
+  setManualDot,
+  manualMode,
+  setManualMode,
+  manualString,
+  setManualString,
+  manualFret,
+  setManualFret,
+  currentNote,
+  setCurrentNote,
+  targetNote,
+  setTargetNote,
   lastCorrectNote,
   setLastCorrectNote,
   lastIncorrectNote,
   setLastIncorrectNote,
-  lastCorrectTimeout,
-  lastIncorrectTimeout,
+  ALL_CHROMATIC_NOTES_ORDERED,
+  frets,
+  strings,
+  fretboardHeight,
+  noteDot,
+  setNoteDot,
+  difficulty,
+  setDifficulty,
+  verticalOffset,
+  setVerticalOffset,
+  horizontalOffset,
+  setHorizontalOffset,
+  numberOfPositions,
+  setNumberOfPositions,
+  ManageResultMessage,
 }) => {
+  const correctSound = React.useRef<Audio.Sound | null>(null);
+  const wrongSound = React.useRef<Audio.Sound | null>(null);
+  const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
+  const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadSounds() {
+      try {
+        const { sound: correct } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/correct.wav')
+        );
+        const { sound: wrong } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/wrong.wav')
+        );
+        if (isMounted) {
+          correctSound.current = correct;
+          wrongSound.current = wrong;
+        }
+      } catch (e) {
+        console.warn('Failed to load sounds', e);
+      }
+    }
+    loadSounds();
+    return () => {
+      isMounted = false;
+      if (correctSound.current) {
+        correctSound.current.unloadAsync();
+      }
+      if (wrongSound.current) {
+        wrongSound.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  const playSound = async (isCorrect: boolean) => {
+    try {
+      if (isCorrect && correctSound.current) {
+        await correctSound.current.replayAsync();
+      } else if (!isCorrect && wrongSound.current) {
+        await wrongSound.current.replayAsync();
+      }
+    } catch (e) {
+      // Ignore sound errors
+    }
+  };
+
   const gameOver = numberOfPositions === 0;
   let performanceMsg = ''
   if (gameOver) {
@@ -559,7 +614,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
               <Button
                 disabled={numberOfPositions === 0}
                 key={note}
-                onPress={() => {
+                onPress={async () => {
                   setLastCorrectNote(noteDot[2]);
                   if (lastCorrectTimeout.current) clearTimeout(lastCorrectTimeout.current);
                   lastCorrectTimeout.current = setTimeout(() => setLastCorrectNote(null), 500);
@@ -573,6 +628,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     : GenDotList(fretboardHeight, strings.length, currentNoteGenDifficulty < 0 ? 0 : currentNoteGenDifficulty);
 
                   if (noteDot[2] === note) {
+                    await playSound(true);
                     ManageResultMessage("✅");
                     setScore(score + 1);
                     setNumberOfPositions(numberOfPositions - 1);
@@ -581,7 +637,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     setLastIncorrectNote(note);
                     if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
                     lastIncorrectTimeout.current = setTimeout(() => setLastIncorrectNote(null), 500);
-                    
+                    await playSound(false);
                     ManageResultMessage("❌");
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
