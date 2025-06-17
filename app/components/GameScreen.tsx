@@ -126,8 +126,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
 }) => {
   const correctSound = React.useRef<Audio.Sound | null>(null);
   const wrongSound = React.useRef<Audio.Sound | null>(null);
+  const levelPassSound = React.useRef<Audio.Sound | null>(null);
+  const levelLoseSound = React.useRef<Audio.Sound | null>(null);
   const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
+  const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -142,6 +145,16 @@ const GameScreen: React.FC<GameScreenProps> = ({
         if (isMounted) {
           correctSound.current = correct;
           wrongSound.current = wrong;
+
+        const { sound: pass } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/leveloverpass.wav')
+        );
+        levelPassSound.current = pass;
+
+        const { sound: lose } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/leveloverlose.wav')
+        );
+        levelLoseSound.current = lose;
         }
       } catch (e) {
         console.warn('Failed to load sounds', e);
@@ -154,10 +167,43 @@ const GameScreen: React.FC<GameScreenProps> = ({
         correctSound.current.unloadAsync();
       }
       if (wrongSound.current) {
-        wrongSound.current.unloadAsync();
+        wrongSound.current?.unloadAsync();
       }
+      levelPassSound.current?.unloadAsync();
+      levelLoseSound.current?.unloadAsync();
     };
   }, []);
+
+  // Effect to handle level completion
+  React.useEffect(() => {
+    if (numberOfPositions === 0 && !levelEndSoundPlayed) {
+      // Ensure sounds are loaded and available
+      if (levelPassSound.current || levelLoseSound.current) {
+        if (score >= 27) {
+          playLevelEndSound(true);
+          ManageResultMessage("🎉 Level Passed! 🎉");
+          if (campaignMode && user && selectedLevel === unlockedLevel) {
+            const newUnlockedLevel = unlockedLevel + 1;
+            setUnlockedLevel(newUnlockedLevel);
+            if (user.uid) { // Ensure user.uid is available
+              saveUserLevel(user.uid, newUnlockedLevel); // saveUserLevel is imported directly
+            }
+          }
+        } else {
+          playLevelEndSound(false);
+          ManageResultMessage("💔 Level Failed 💔");
+        }
+        setLevelEndSoundPlayed(true); // Set the flag after playing the sound
+        // Optionally, navigate away or disable further interactions after a delay
+        // const timer = setTimeout(() => {
+        //   if (currentScreen === 'Game') { // Check if still on game screen
+        //      setScreen(campaignMode ? 'LevelSelectScreen' : 'MainMenuScreen'); // Use actual screen names
+        //   }
+        // }, 3000);
+        // return () => clearTimeout(timer);
+      }
+    }
+  }, [numberOfPositions, score, campaignMode, user, selectedLevel, unlockedLevel, setUnlockedLevel, ManageResultMessage, currentScreen, setScreen]); // Dependencies for level completion logic
 
   const playSound = async (isCorrect: boolean) => {
     try {
@@ -168,6 +214,18 @@ const GameScreen: React.FC<GameScreenProps> = ({
       }
     } catch (e) {
       // Ignore sound errors
+    }
+  };
+
+  const playLevelEndSound = async (didPass: boolean) => {
+    try {
+      if (didPass && levelPassSound.current) {
+        await levelPassSound.current.replayAsync();
+      } else if (!didPass && levelLoseSound.current) {
+        await levelLoseSound.current.replayAsync();
+      }
+    } catch (error) {
+      console.error("Error playing level end sound", error);
     }
   };
 
@@ -275,6 +333,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastCorrectNote(null);
                   setLastIncorrectNote(null);
                   setResultMessage(null);
+                  setLevelEndSoundPlayed(false); // Reset flag for new game
                 }}
               >
                 <Text style={{
@@ -300,6 +359,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setScreen('menu');
                   setScore(0);
                   setNumberOfPositions(30);
+                  setLevelEndSoundPlayed(false); // Reset flag when going back to menu
                 }}
               >
                 <Text style={{
