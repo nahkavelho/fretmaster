@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NAV_THEME } from '../lib/constants';
 
 // ThemeName type definition
-export type ThemeName = 'light' | 'dark' | 'rocksmith' | 'sunsetGlow' | 'oceanDeep';
+export type ThemeName = 'rocksmith' | 'sunsetGlow' | 'oceanDeep';
 
 // ThemePalette interface definition
 export interface ThemePalette {
@@ -54,56 +54,7 @@ export const OCEAN_DEEP_STRING_COLORS = [
 // THEME_PALETTES definition using NAV_THEME from ../lib/constants
 
 export const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
-  light: {
-    ...NAV_THEME.light, // Spreads background, border, card, notification, primary, text from NAV_THEME.light
-    // Explicitly define ThemePalette fields using NAV_THEME or custom values
-    background: NAV_THEME.light.background,
-    text: NAV_THEME.light.text,
-    textSecondary: '#757575',
-    button: NAV_THEME.light.primary, // Use NAV_THEME's primary for button
-    buttonText: '#FFFFFF',
-    modalBackground: NAV_THEME.light.card, // Use NAV_THEME's card for modalBackground
-    fretboardBackground: '#E0E0E0',
-    fretboardBorder: '#A0A0A0',
-    fretboardNut: '#BDBDBD',
-    noteDotOpen: '#FF0000',
-    noteDotOpenBorder: '#C62828',
-    noteDotFretted: '#0000FF',
-    noteDotFrettedBorder: '#1565C0',
-    stringColors: Array(6).fill('#888888'),
-    fretboardInlayDot: '#000000', // Black
-    noteButtonBackground: '#DDDDDD', // Light grey
-    noteButtonBorderColor: '#CCCCCC', // Lighter grey
-    noteButtonText: '#333333',     // Dark text
-    // primary, card, notification are already set from the spread if not overridden
-    icon: NAV_THEME.light.primary, // Use NAV_THEME's primary for icon
-    shadow: '#000000',
-  },
-  dark: {
-    ...NAV_THEME.dark, // Spreads background, border, card, notification, primary, text from NAV_THEME.dark
-    // Explicitly define ThemePalette fields using NAV_THEME or custom values
-    background: NAV_THEME.dark.background,
-    text: NAV_THEME.dark.text,
-    textSecondary: '#BDBDBD',
-    button: NAV_THEME.dark.primary, // Use NAV_THEME's primary for button
-    buttonText: '#FFFFFF',
-    modalBackground: NAV_THEME.dark.card, // Use NAV_THEME's card for modalBackground
-    fretboardBackground: '#333333',
-    fretboardBorder: '#555555',
-    fretboardNut: '#616161',
-    noteDotOpen: '#FF0000',
-    noteDotOpenBorder: '#E57373',
-    noteDotFretted: '#FFFF00',
-    noteDotFrettedBorder: '#FFF59D',
-    stringColors: Array(6).fill('#CCCCCC'),
-    fretboardInlayDot: '#FFFFFF', // White
-    noteButtonBackground: '#444444', // Dark grey
-    noteButtonBorderColor: '#666666', // Lighter dark grey
-    noteButtonText: '#FFFFFF',     // White text
-    // primary, card, notification are already set from the spread if not overridden
-    icon: NAV_THEME.dark.primary, // Use NAV_THEME's primary for icon
-    shadow: '#000000',
-  },
+
   rocksmith: {
     background: '#181A1B',
     text: '#E0E0E0',
