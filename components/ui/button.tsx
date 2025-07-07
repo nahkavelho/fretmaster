@@ -73,18 +73,9 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
     textColor = palette.buttonText;
     borderColor = palette.primary; // Default border to primary
 
-    // Theme-specific overrides if necessary (Rocksmith example)
-    if (themeName === 'rocksmith') {
-      // Rocksmith uses its specific button colors, primary for border is already set
-      bgColor = palette.button; // e.g., '#555'
-      borderColor = palette.primary; // Now '#FFD900' (Yellow)
-      textColor = palette.buttonText; // e.g., '#FFF'
-    } else if (themeName === 'dark') {
-      // Dark theme might use textSecondary or a specific border color for default buttons
-      borderColor = palette.textSecondary; // Example: using textSecondary for border
-    } else {
-      // Light theme might use text or a specific border color
-      borderColor = palette.text; // Example: using text for border
+    // Use text color for border on non-rocksmith themes
+    if (themeName !== 'rocksmith') {
+      borderColor = palette.text;
     }
 
     // Destructive variant overrides
