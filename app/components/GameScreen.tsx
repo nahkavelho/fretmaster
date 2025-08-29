@@ -536,7 +536,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         {/* Score and Level Display - Centered Top */}
         <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
           <Text style={{ color: palette.text, fontWeight: "bold", fontSize: 18 }}>
-            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Score: {score}
+            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score}
           </Text>
         </View>
 
@@ -664,11 +664,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
         )}
         {/* Answer bar (note buttons) */}
         <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20 }]}> 
-          <View style={{ width: '100%', alignItems: 'center' as const, marginBottom: 2 }}>
-            <Text style={{ color: palette.text, fontWeight: "bold", fontSize: 16, marginBottom: 2 }}>
-              Guesses left: {numberOfPositions} | Current Note: {noteDot[2]} | String: {noteDot[3]+1} Fret: {noteDot[4]}
-            </Text>
-          </View>
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' as const }}>
             {ALL_CHROMATIC_NOTES_ORDERED.map((note: string)  => (
               <Button
@@ -685,7 +680,17 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   
                   const nextNoteDot = manualMode
                     ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-                    : GenDotList(fretboardHeight, strings.length, currentNoteGenDifficulty < 0 ? 0 : currentNoteGenDifficulty);
+                    : (() => {
+                        // Prevent the same note name from appearing twice in a row
+                        const difficultyForGen = currentNoteGenDifficulty < 0 ? 0 : currentNoteGenDifficulty;
+                        let generated = GenDotList(fretboardHeight, strings.length, difficultyForGen);
+                        let attempts = 0;
+                        while (generated[2] === noteDot[2] && attempts < 10) {
+                          generated = GenDotList(fretboardHeight, strings.length, difficultyForGen);
+                          attempts++;
+                        }
+                        return generated;
+                      })();
 
                   if (noteDot[2] === note) {
                     await playSound(true);
