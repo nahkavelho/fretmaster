@@ -128,9 +128,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const wrongSound = React.useRef<Audio.Sound | null>(null);
   const levelPassSound = React.useRef<Audio.Sound | null>(null);
   const levelLoseSound = React.useRef<Audio.Sound | null>(null);
+  const streakSound = React.useRef<Audio.Sound | null>(null);
   const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
+  const [combo, setCombo] = React.useState(0);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -155,6 +157,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
           require('../../assets/sounds/leveloverlose.wav')
         );
         levelLoseSound.current = lose;
+
+        const { sound: streak } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/streak.wav')
+        );
+        streakSound.current = streak;
         }
       } catch (e) {
         console.warn('Failed to load sounds', e);
@@ -171,6 +178,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
       }
       levelPassSound.current?.unloadAsync();
       levelLoseSound.current?.unloadAsync();
+      streakSound.current?.unloadAsync();
     };
   }, []);
 
@@ -226,6 +234,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
       }
     } catch (error) {
       console.error("Error playing level end sound", error);
+    }
+  };
+
+  const playStreakCue = async (combo: number) => {
+    try {
+      if (combo === 5 || combo === 10 || combo === 20) {
+        if (streakSound.current) {
+          await streakSound.current.replayAsync();
+        } else if (correctSound.current) {
+          await correctSound.current.replayAsync();
+        }
+      }
+    } catch {
+      // Silently ignore streak cue errors
     }
   };
 
@@ -334,6 +356,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastIncorrectNote(null);
                   setResultMessage(null);
                   setLevelEndSoundPlayed(false); // Reset flag for new game
+                  setCombo(0);
                 }}
               >
                 <Text style={{
@@ -360,6 +383,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setScore(0);
                   setNumberOfPositions(30);
                   setLevelEndSoundPlayed(false); // Reset flag when going back to menu
+                  setCombo(0);
                 }}
               >
                 <Text style={{
@@ -400,6 +424,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
               setLastCorrectNote(null);
               setLastIncorrectNote(null);
               setResultMessage(null);
+              setCombo(0);
             }}
           >
             <Text
@@ -439,6 +464,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
               onPress={() => {
                 setScreen('campaign');
                 setCampaignMode(false); // Exit campaign mode when going back to level selection
+                setCombo(0);
               }}
             >
               <Text
@@ -476,7 +502,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   marginBottom: 0,
                 },
               ]}
-              onPress={() => setScreen('menu')}
+              onPress={() => { setScreen('menu'); setCombo(0); }}
             >
               <Text
                 style={[
@@ -515,7 +541,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                 marginBottom: 0,
               },
             ]}
-            onPress={() => setScreen('settings')}
+            onPress={() => { setScreen('settings'); setCombo(0); }}
           >
             <Text
               style={[
@@ -536,7 +562,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         {/* Score and Level Display - Centered Top */}
         <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
           <Text style={{ color: palette.text, fontWeight: "bold", fontSize: 18 }}>
-            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score}
+            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score} | Combo: {combo}
           </Text>
         </View>
 
@@ -691,13 +717,18 @@ const GameScreen: React.FC<GameScreenProps> = ({
                         }
                         return generated;
                       })();
-
+                  const newCombo = combo + 1;
+                  setCombo(newCombo);
                   if (noteDot[2] === note) {
                     await playSound(true);
                     ManageResultMessage("✅");
                     setScore(score + 1);
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
+                    if (newCombo === 5 || newCombo === 10 || newCombo === 20) {
+                      ManageResultMessage(`🔥 Streak x${newCombo}!`);
+                      await playStreakCue(newCombo);
+                    }
                   } else {
                     setLastIncorrectNote(note);
                     if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
@@ -706,6 +737,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     ManageResultMessage("❌");
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
+                    setCombo(0);
                   }
                 }}
                 style={[
