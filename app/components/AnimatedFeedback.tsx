@@ -16,22 +16,31 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
       Animated.sequence([
         Animated.timing(feedbackAnimation, {
           toValue: 1,
-          duration: 12,
+          duration: 80,
           useNativeDriver: true,
         }),
         Animated.timing(feedbackAnimation, {
           toValue: 0,
-          duration: 380,
-          delay: 100,
+          duration: 400,
+          delay: 700,
           useNativeDriver: true,
         }),
       ]).start();
     } else {
-      Animated.timing(feedbackAnimation, {
-        toValue: 1,
-        delay: 100,
-        useNativeDriver: true,
-      }).start();
+      // For streak or other textual messages, fade in, hold longer, then fade out
+      Animated.sequence([
+        Animated.timing(feedbackAnimation, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(feedbackAnimation, {
+          toValue: 0,
+          duration: 450,
+          delay: 1200,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [resultMessage]);
 

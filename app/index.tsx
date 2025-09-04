@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useRouter } from 'expo-router'; // Removed Stack and Screen as ExpoRouterScreen
 // import * as ScreenOrientation from 'expo-screen-orientation'; // Functionality moved to useScreenOrientation hook
-import { View, Text, StyleSheet, Animated, Alert, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, Animated, Alert, ViewStyle, TextStyle, Dimensions } from 'react-native';
+
 import Fretboard from "./components/Fretboard";
 import Button from "../components/ui/button";
 import Menu from "./components/Menu";
@@ -92,7 +93,21 @@ export function FretboarderAppScreen() {
  
   // Free mode state (always defined, only used when in free mode)
   const [difficulty, setDifficulty] = React.useState(0);
-  const [fretboardHeight, setFretboardHeight] = React.useState(200);
+  const calcFretboardHeight = React.useCallback((screenName: string) => {
+    const { width, height } = Dimensions.get('window');
+    const isLandscape = width > height;
+    // In free/game mode we lock to landscape, so base height as a proportion of window height.
+    // In other screens, keep a conservative size.
+    if (screenName === 'free') {
+      const target = Math.round(height * 0.68); // 68% of viewport height in landscape
+      return Math.max(160, Math.min(target, 420)); // clamp
+    }
+    const target = Math.round(height * 0.42);
+    return Math.max(140, Math.min(target, 360));
+  }, []);
+
+  const [fretboardHeight, setFretboardHeight] = React.useState(() => calcFretboardHeight('menu'));
+
   const [manualMode, setManualMode] = React.useState(false);
   const [manualString, setManualString] = React.useState(0); // First string (High E, 0-indexed, at the top)
   const [manualFret, setManualFret] = React.useState(0);    // First fret
@@ -119,6 +134,8 @@ export function FretboarderAppScreen() {
   React.useEffect(() => {
     if (currentScreen === 'free') {
       console.log(`Resetting game for 'free' screen. Campaign Mode: ${campaignMode}, Selected Level: ${selectedLevel}, Difficulty: ${difficulty}`);
+      // Ensure responsive height when entering the game screen
+      setFretboardHeight(calcFretboardHeight('free'));
       setScore(0);
       setNumberOfPositions(30);
       const currentDifficulty = campaignMode ? selectedLevel - 1 : difficulty;
@@ -128,7 +145,21 @@ export function FretboarderAppScreen() {
       setLastIncorrectNote(null);
       setResultMessage(null);
     }
-  }, [currentScreen, campaignMode, selectedLevel, difficulty, fretboardHeight]);
+  }, [currentScreen, campaignMode, selectedLevel, difficulty, calcFretboardHeight, fretboardHeight]);
+
+  // Update fretboard height on dimension changes to fit different phones
+  React.useEffect(() => {
+    const handler = ({ window }: { window: { width: number; height: number } }) => {
+      setFretboardHeight(calcFretboardHeight(currentScreen));
+    };
+    const subscription = Dimensions.addEventListener('change', handler);
+    return () => {
+      if (typeof (subscription as any)?.remove === 'function') {
+        (subscription as any).remove();
+      }
+      // If on a very old RN where addEventListener doesn't return a subscription, there's nothing to remove.
+    };
+  }, [currentScreen, calcFretboardHeight]);
 
   const ManageResultMessage = (message: string) => {
     setResultMessage(message)
@@ -258,8 +289,6 @@ const NOTE_NAMES = (
         numberOfPositions={numberOfPositions}
         setNumberOfPositions={setNumberOfPositions}
         ManageResultMessage={ManageResultMessage}
-        lastCorrectTimeout={lastCorrectTimeout}
-        lastIncorrectTimeout={lastIncorrectTimeout}
       />
     );
   }
