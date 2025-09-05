@@ -10,7 +10,7 @@ interface CampaignProps {
   unlockedLevel: number
 }
 
-const LEVEL_COUNT = 12;
+const LEVEL_COUNT = 36;
 const QUESTS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ id: i + 1, name: `Level ${i + 1}` }));
 
 const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.create({
@@ -63,6 +63,11 @@ import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Adde
 const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
   const { themeName, palette } = React.useContext(ThemeContext);
   const styles = getStyles(themeName, palette); // Call getStyles
+  const getLevelColor = React.useCallback((level: number) => {
+    if (level >= 1 && level <= 12) return '#2ecc40'; // Green - Beginner
+    if (level >= 13 && level <= 24) return '#FFC107'; // Yellow - Intermediate
+    return '#FF5555'; // Red - Advanced (25–36)
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -76,9 +81,16 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
               activeOpacity={0.8}
               style={{ padding: 8 }}
             >
-              <FontAwesome5 name="guitar" size={48} style={styles.iconStyle} />
+              <FontAwesome5 name="guitar" size={48} color={getLevelColor(quest.id)} />
             </TouchableOpacity>
-            <Text style={styles.questText}>{quest.name}</Text>
+            <TouchableOpacity
+              disabled={quest.id > unlockedLevel}
+              onPress={() => { onLevelSelect(quest.id); }}
+              activeOpacity={0.8}
+              style={{ paddingVertical: 8, paddingHorizontal: 4 }}
+            >
+              <Text style={[styles.questText, { color: getLevelColor(quest.id) }]}>{quest.name}</Text>
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>

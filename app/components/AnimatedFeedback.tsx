@@ -13,20 +13,37 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
 
   React.useEffect(() => {
     if (!resultMessage) return;
-    const isQuick = (resultMessage === "✅" || resultMessage === "❌");
-    Animated.sequence([
-      Animated.timing(feedbackAnimation, {
-        toValue: 1,
-        duration: isQuick ? 12 : 120,
-        useNativeDriver: true,
-      }),
-      Animated.timing(feedbackAnimation, {
-        toValue: 0,
-        duration: isQuick ? 380 : 420,
-        delay: isQuick ? 100 : 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    const isQuick = (resultMessage === '✅' || resultMessage === '❌');
+    if (isQuick) {
+      Animated.sequence([
+        Animated.timing(feedbackAnimation, {
+          toValue: 1,
+          duration: 80,
+          useNativeDriver: true,
+        }),
+        Animated.timing(feedbackAnimation, {
+          toValue: 0,
+          duration: 400,
+          delay: 700,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // For streak or other textual messages, fade in, hold longer, then fade out
+      Animated.sequence([
+        Animated.timing(feedbackAnimation, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(feedbackAnimation, {
+          toValue: 0,
+          duration: 450,
+          delay: 1200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   }, [resultMessage]);
 
   if (resultMessage) {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, Alert, ViewStyle, TextStyle, Animated } from 'react-native';
+import { View, Text, Alert, ViewStyle, TextStyle, Animated, Dimensions } from 'react-native';
 import { Audio } from 'expo-av';
 import Fretboard from "./Fretboard";
 import Button from "../../components/ui/button"; // Adjusted path to root ui components
@@ -124,6 +124,19 @@ const GameScreen: React.FC<GameScreenProps> = ({
   setNumberOfPositions,
   ManageResultMessage,
 }) => {
+  const { width, height } = Dimensions.get('window');
+  const shortDim = Math.min(width, height);
+  const isCompact = shortDim < 360;
+  const answerBarHeight = Math.max(80, Math.min(Math.round(height * 0.24), 160));
+  const noteBtnPaddingV = isCompact ? 6 : 10;
+  const noteBtnPaddingH = isCompact ? 10 : 14;
+  const noteBtnMinWidth = isCompact ? 44 : 56;
+  const noteBtnMinHeight = isCompact ? 40 : 48;
+  const noteBtnBorderRadius = isCompact ? 10 : 12;
+  const noteFontSize = isCompact ? 14 : 18;
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const statusBarHeight = isCompact ? 28 : 38;
+
   const correctSound = React.useRef<Audio.Sound | null>(null);
   const wrongSound = React.useRef<Audio.Sound | null>(null);
   const levelPassSound = React.useRef<Audio.Sound | null>(null);
@@ -133,6 +146,67 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
   const [combo, setCombo] = React.useState(0);
+  const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
+  const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const getTimePerGuess = React.useCallback(() => {
+    if (!campaignMode) return null; // Timer only active in campaign as requested
+    if (selectedLevel >= 1 && selectedLevel <= 12) return 8; // Beginner
+    if (selectedLevel >= 13 && selectedLevel <= 24) return 5; // Intermediate
+    if (selectedLevel >= 25 && selectedLevel <= 36) return 3; // Advanced
+    return 8; // Default safety
+  }, [campaignMode, selectedLevel]);
+
+  const clearGuessTimer = React.useCallback(() => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    setTimeLeft(null);
+  }, []);
+
+  const startGuessTimer = React.useCallback(() => {
+    const duration = getTimePerGuess();
+    clearGuessTimer();
+    if (!duration || numberOfPositions === 0) return;
+    setTimeLeft(duration);
+    const startedAt = Date.now();
+    timerIntervalRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      const remaining = duration - elapsed;
+      if (remaining <= 0) {
+        clearGuessTimer();
+        // Auto mark as wrong and advance to next
+        (async () => {
+          try {
+            if (wrongSound.current) {
+              await wrongSound.current.replayAsync();
+            }
+          } catch {}
+          ManageResultMessage("⏰ Time up!");
+          // Generate next note (respect not repeating same note name)
+          const currentNoteGenDifficulty = campaignMode 
+            ? (selectedLevel - 1)
+            : difficulty;
+          const difficultyForGen = currentNoteGenDifficulty < 0 ? 0 : currentNoteGenDifficulty;
+          let generated = GenDotList(fretboardHeight, strings.length, difficultyForGen);
+          let attempts = 0;
+          while (generated[2] === noteDot[2] && attempts < 10) {
+            generated = GenDotList(fretboardHeight, strings.length, difficultyForGen);
+            attempts++;
+          }
+          setNumberOfPositions(Math.max(0, numberOfPositions - 1));
+          setNoteDot(generated);
+          setCombo(0);
+        })();
+      } else {
+        setTimeLeft(remaining);
+      }
+    }, 250);
+  }, [getTimePerGuess, numberOfPositions, ManageResultMessage, campaignMode, selectedLevel, difficulty, fretboardHeight, strings.length, noteDot, clearGuessTimer, setNumberOfPositions, setNoteDot]);
+
+  // Define gameOver early so effects can depend on it without use-before-declare
+  const gameOver = numberOfPositions === 0;
 
   React.useEffect(() => {
     let isMounted = true;
@@ -157,7 +231,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           require('../../assets/sounds/leveloverlose.wav')
         );
         levelLoseSound.current = lose;
-
+        // Load streak sound
         const { sound: streak } = await Audio.Sound.createAsync(
           require('../../assets/sounds/streak.wav')
         );
@@ -179,8 +253,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
       levelPassSound.current?.unloadAsync();
       levelLoseSound.current?.unloadAsync();
       streakSound.current?.unloadAsync();
+      clearGuessTimer();
     };
-  }, []);
+  }, [clearGuessTimer]);
 
   // Effect to handle level completion
   React.useEffect(() => {
@@ -237,21 +312,19 @@ const GameScreen: React.FC<GameScreenProps> = ({
     }
   };
 
-  const playStreakCue = async (combo: number) => {
+  // Play special streak cue at 5/10/20 using streak.wav (fallback to correct.wav)
+  const playStreakCue = async (count: number) => {
     try {
-      if (combo === 5 || combo === 10 || combo === 20) {
+      if (count === 5 || count === 10 || count === 20) {
         if (streakSound.current) {
           await streakSound.current.replayAsync();
         } else if (correctSound.current) {
           await correctSound.current.replayAsync();
         }
       }
-    } catch {
-      // Silently ignore streak cue errors
-    }
+    } catch {}
   };
 
-  const gameOver = numberOfPositions === 0;
   let performanceMsg = ''
   if (gameOver) {
     if (score >= 30) {
@@ -262,7 +335,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
     }
     else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
     else performanceMsg = 'Keep practicing! You can do it!';
-    if (campaignMode && score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 12) {
+    if (campaignMode && score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 36) {
       const newUnlockedLevel = unlockedLevel + 1;
       setUnlockedLevel(newUnlockedLevel);
       if (user) {
@@ -275,7 +348,11 @@ const GameScreen: React.FC<GameScreenProps> = ({
 
   return (
     <View style={styles.root}>
-      <View style={[styles.fretboardContainer, themeName === 'rocksmith' && { backgroundColor: '#181A1B' }]}>
+      <View style={[
+        styles.fretboardContainer,
+        themeName === 'rocksmith' && { backgroundColor: '#181A1B' },
+        { paddingBottom: answerBarHeight + 12, paddingTop: statusBarHeight + 8 }
+      ]}>
         {/* Result Box Modal */}
         {gameOver && (
           <View style={{
@@ -305,7 +382,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
               <Text style={{ fontSize: 32, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 10 }}>Game Over</Text>
               <Text style={{ fontSize: 26, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
               <Text style={{ fontSize: 18, color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 20, textAlign: 'center' as const }}>{performanceMsg}</Text>
-              {score >= 27 && selectedLevel < 12 && (
+              {score >= 27 && selectedLevel < 36 && (
                 <Button
                   style={[
                     {
@@ -320,7 +397,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     },
                   ]}
                   onPress={() => {
-                    if (selectedLevel < 12) {
+                    if (selectedLevel < 36) {
                       setSelectedLevel(selectedLevel + 1);
                     }
                   }}
@@ -356,7 +433,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastIncorrectNote(null);
                   setResultMessage(null);
                   setLevelEndSoundPlayed(false); // Reset flag for new game
-                  setCombo(0);
                 }}
               >
                 <Text style={{
@@ -395,174 +471,86 @@ const GameScreen: React.FC<GameScreenProps> = ({
             </View>
           </View>
         )}
-        {/* Floating Menu/Reset Buttons - Top Left */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, position: 'absolute', top: 8, left: 8, zIndex: 11 }}>
+        {/* Single compact menu button and dropdown */}
+        <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 12 }}>
           <Button
-            style={[
-              styles.menuButton,
-              {
-                minWidth: 80,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                height: undefined,
-                alignItems: 'center' as const,
-                justifyContent: 'center' as const,
-                backgroundColor: palette.notification, 
-                borderColor: palette.primary, 
-                borderWidth: 2,
-                marginLeft: 0, 
-                marginRight: 0,
-                marginBottom: 0,
-              },
-            ]}
-            onPress={() => {
-              setScore(0);
-              setNumberOfPositions(30);
-              const currentDifficultyForReset = campaignMode ? selectedLevel - 1 : difficulty;
-              setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficultyForReset < 0 ? 0 : currentDifficultyForReset));
-              setNoteQueue([]);
-              setLastCorrectNote(null);
-              setLastIncorrectNote(null);
-              setResultMessage(null);
-              setCombo(0);
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              paddingVertical: 0,
+              paddingHorizontal: 0,
+              alignItems: 'center' as const,
+              justifyContent: 'center' as const,
             }}
+            onPress={() => setMenuOpen((v) => !v)}
           >
-            <Text
-              style={[
-                styles.menuButtonText,
-                {
-                  fontSize: 16,
-                  color: palette.buttonText, 
-                },
-              ]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              Reset
-            </Text>
+            <Text style={{ color: palette.buttonText, fontWeight: 'bold', fontSize: 16 }}>☰</Text>
           </Button>
 
-          {campaignMode && (
-            <Button
-              style={[
-                styles.menuButton,
-                {
-                  minWidth: 80,
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  height: undefined,
-                  alignItems: 'center' as const,
-                  justifyContent: 'center' as const,
-                  backgroundColor: palette.card, 
-                  borderColor: palette.primary, 
-                  borderWidth: 2,
-                  marginLeft: 0, 
-                  marginRight: 0,
-                  marginBottom: 0,
-                },
-              ]}
-              onPress={() => {
-                setScreen('campaign');
-                setCampaignMode(false); // Exit campaign mode when going back to level selection
-                setCombo(0);
-              }}
-            >
-              <Text
-                style={[
-                  styles.menuButtonText,
-                  {
-                    fontSize: 16,
-                    color: palette.text, 
-                  },
-                ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
+          {menuOpen && (
+            <View style={{
+              position: 'absolute',
+              top: 40,
+              right: 0,
+              backgroundColor: palette.card,
+              borderColor: palette.primary,
+              borderWidth: 2,
+              borderRadius: 12,
+              paddingVertical: 8,
+              paddingHorizontal: 8,
+              gap: 6,
+              minWidth: 150,
+              shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+            }}>
+              <Button
+                style={{ paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 }}
+                onPress={() => {
+                  setMenuOpen(false);
+                  setScore(0);
+                  setNumberOfPositions(30);
+                  const currentDifficultyForReset = campaignMode ? selectedLevel - 1 : difficulty;
+                  setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficultyForReset < 0 ? 0 : currentDifficultyForReset));
+                  setNoteQueue([]);
+                  setLastCorrectNote(null);
+                  setLastIncorrectNote(null);
+                  setResultMessage(null);
+                  setCombo(0);
+                }}
               >
-                Levels
-              </Text>
-            </Button>
-          )}
+                <Text style={{ color: palette.buttonText, fontWeight: 'bold' }}>Reset</Text>
+              </Button>
 
-          {!campaignMode && (
-            <Button
-              style={[
-                styles.menuButton,
-                {
-                  minWidth: 80,
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  height: undefined,
-                  alignItems: 'center' as const,
-                  justifyContent: 'center' as const,
-                  backgroundColor: palette.card, 
-                  borderColor: palette.primary, 
-                  borderWidth: 2,
-                  marginLeft: 0, 
-                  marginRight: 0,
-                  marginBottom: 0,
-                },
-              ]}
-              onPress={() => { setScreen('menu'); setCombo(0); }}
-            >
-              <Text
-                style={[
-                  styles.menuButtonText,
-                  {
-                    fontSize: 16,
-                    color: palette.text, 
-                  },
-                ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
+              {campaignMode && (
+                <Button
+                  style={{ paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 }}
+                  onPress={() => { setMenuOpen(false); setScreen('campaign'); setCampaignMode(false); setCombo(0); }}
+                >
+                  <Text style={{ color: palette.text, fontWeight: 'bold' }}>Levels</Text>
+                </Button>
+              )}
+
+              <Button
+                style={{ paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 }}
+                onPress={() => { setMenuOpen(false); setScreen('settings'); setCombo(0); }}
               >
-                Menu
-              </Text>
-            </Button>
-          )}
-        </View>
+                <Text style={{ color: palette.text, fontWeight: 'bold' }}>Settings</Text>
+              </Button>
 
-        {/* Floating Settings/Manual Mode Button - Top Right */}
-        <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}>
-          <Button
-            style={[
-              styles.menuButton,
-              {
-                minWidth: 80,
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                height: undefined,
-                alignItems: 'center' as const,
-                justifyContent: 'center' as const,
-                backgroundColor: palette.card, 
-                borderColor: palette.primary, 
-                borderWidth: 2,
-                marginLeft: 0, 
-                marginRight: 0,
-                marginBottom: 0,
-              },
-            ]}
-            onPress={() => { setScreen('settings'); setCombo(0); }}
-          >
-            <Text
-              style={[
-                styles.menuButtonText,
-                {
-                  fontSize: 16,
-                  color: palette.text, 
-                },
-              ]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              Settings
-            </Text>
-          </Button>
+              <Button
+                style={{ paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8 }}
+                onPress={() => { setMenuOpen(false); setScreen('menu'); setCombo(0); }}
+              >
+                <Text style={{ color: palette.text, fontWeight: 'bold' }}>Menu</Text>
+              </Button>
+            </View>
+          )}
         </View>
 
         {/* Score and Level Display - Centered Top */}
         <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
-          <Text style={{ color: palette.text, fontWeight: "bold", fontSize: 18 }}>
-            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score} | Combo: {combo}
+          <Text style={{ color: palette.text, fontWeight: 'bold', fontSize: 18 }}>
+            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score} | Combo: {combo}{campaignMode && timeLeft !== null ? ` | Time: ${timeLeft}s` : ''}
           </Text>
         </View>
 
@@ -689,13 +677,27 @@ const GameScreen: React.FC<GameScreenProps> = ({
           </View>
         )}
         {/* Answer bar (note buttons) */}
-        <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20 }]}> 
+        <View style={[styles.answerBar, { position: 'absolute', left: 0, right: 0, bottom: 0, margin: 0, borderRadius: 0, zIndex: 20, height: answerBarHeight, padding: isCompact ? 16 : 24, borderTopWidth: 0, borderColor: 'transparent' }]}> 
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", alignItems: 'center' as const }}>
             {ALL_CHROMATIC_NOTES_ORDERED.map((note: string)  => (
               <Button
                 disabled={numberOfPositions === 0}
                 key={note}
+                style={[
+                  {
+                    paddingVertical: noteBtnPaddingV,
+                    paddingHorizontal: noteBtnPaddingH,
+                    minWidth: noteBtnMinWidth,
+                    minHeight: noteBtnMinHeight,
+                    borderRadius: noteBtnBorderRadius,
+                    margin: 6,
+                  },
+                  lastCorrectNote === note ? { backgroundColor: '#2ecc40', borderWidth: 2, borderColor: '#145a1f' } : null,
+                  lastIncorrectNote === note ? { backgroundColor: '#ff5555', borderWidth: 2, borderColor: '#a10000' } : null,
+                ]}
                 onPress={async () => {
+                  // User answered: cancel timer for this guess
+                  clearGuessTimer();
                   setLastCorrectNote(noteDot[2]);
                   if (lastCorrectTimeout.current) clearTimeout(lastCorrectTimeout.current);
                   lastCorrectTimeout.current = setTimeout(() => setLastCorrectNote(null), 500);
@@ -717,9 +719,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
                         }
                         return generated;
                       })();
-                  const newCombo = combo + 1;
-                  setCombo(newCombo);
                   if (noteDot[2] === note) {
+                    const newCombo = combo + 1;
+                    setCombo(newCombo);
                     await playSound(true);
                     ManageResultMessage("✅");
                     setScore(score + 1);
@@ -729,6 +731,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
                       ManageResultMessage(`🔥 Streak x${newCombo}!`);
                       await playStreakCue(newCombo);
                     }
+                    // Start timer for next note
+                    startGuessTimer();
                   } else {
                     setLastIncorrectNote(note);
                     if (lastIncorrectTimeout.current) clearTimeout(lastIncorrectTimeout.current);
@@ -738,21 +742,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
                     setCombo(0);
+                    // Start timer for next note
+                    startGuessTimer();
                   }
                 }}
-                style={[
-                  styles.noteButton,
-                  lastCorrectNote === note ? { backgroundColor: '#2ecc40', borderWidth: 2, borderColor: '#145a1f' } : null,
-                  lastIncorrectNote === note ? { backgroundColor: '#ff5555', borderWidth: 2, borderColor: '#a10000' } : null
-                ]}
               >
-                <Text style={styles.noteButtonText}>{note}</Text>
+                <Text style={{ color: palette.buttonText, fontWeight: 'bold', fontSize: noteFontSize }}>
+                  {note}
+                </Text>
               </Button>
             ))}
           </View>
         </View>
         {/* Fretboard, slightly bigger height for better fit */}
-        <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center' as const, marginTop: 10, marginBottom: 20 }}>
+        <View style={{ flexShrink: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'center' as const, marginTop: 6, marginBottom: 0 }}>
           <Fretboard
             frets={frets}
             strings={strings}
