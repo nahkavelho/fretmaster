@@ -11,7 +11,7 @@ import GenDotList, { ManualDotPosition as ManualDotPositionFunction } from "./co
 import { NoteDot, Note } from "./components/DotPositions";
 import LoginScreen from '../LoginScreen';
 import { getAuth, onAuthStateChanged, User as FirebaseUser, signOut, Auth } from 'firebase/auth'; // Added FirebaseUser for clarity
-import { auth, getUserLevel, saveUserLevel } from "../firebase"; // Add getUserLevel and saveUserLevel
+import { auth, getUserLevel, saveUserLevel, getLevelScores } from "../firebase"; // Add best scores API
 import Settings from "./components/Settings";
 import { ThemeContext, ThemeName, ThemePalette } from './ThemeContext';
 import { UI_SIZES } from './components/uiConstants';
@@ -43,6 +43,7 @@ export function FretboarderAppScreen() {
   const [currentLevel, setCurrentLevel] = React.useState(1);
   const [unlockedLevel, setUnlockedLevel] = React.useState(1); // TODO: Load from storage
   const [score, setScore] = React.useState(0); // TODO: Load from storage
+  const [bestScores, setBestScores] = React.useState<Record<string, number>>({});
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [feedbackAnimation] = React.useState(new Animated.Value(0));
   const [noteQueue, setNoteQueue] = React.useState<NoteDot[]>([]);
@@ -79,12 +80,20 @@ export function FretboarderAppScreen() {
           setSelectedLevel(1);
           setUnlockedLevel(1);
         }
+        // Load best scores map
+        try {
+          const scores = await getLevelScores(firebaseUser.uid);
+          setBestScores(scores || {});
+        } catch (e) {
+          setBestScores({});
+        }
       } else {
         // User is logged out, reset level states if necessary
         setDifficulty(0);
         setCurrentLevel(1);
         setSelectedLevel(1);
         setUnlockedLevel(1);
+        setBestScores({});
       }
     });
     return unsubscribe; // Cleanup subscription
@@ -216,6 +225,7 @@ const NOTE_NAMES = (
         onLevelSelect={(level) => { setCurrentLevel(level); setSelectedLevel(level); setCampaignMode(true); setScreen('free');}}
         unlockedLevel={unlockedLevel}
         score={score}
+        bestScores={bestScores}
       />
     );
   }
@@ -289,6 +299,9 @@ const NOTE_NAMES = (
         numberOfPositions={numberOfPositions}
         setNumberOfPositions={setNumberOfPositions}
         ManageResultMessage={ManageResultMessage}
+        // Best scores state
+        bestScores={bestScores}
+        setBestScores={setBestScores}
       />
     );
   }

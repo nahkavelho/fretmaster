@@ -67,4 +67,46 @@ export const getUserLevel = async (userId) => {
   }
 };
 
-export { auth, db }; // saveUserLevel and getUserLevel are now exported individually
+// Save per-level best score (max) into a nested map bestScores: { [level: string]: number }
+export const saveLevelScore = async (userId, level, score) => {
+  if (!userId || !level || typeof score !== 'number') return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    const levelKey = String(level);
+    if (docSnap.exists()) {
+      const data = docSnap.data() || {};
+      const currentBestScores = data.bestScores || {};
+      const prev = typeof currentBestScores[levelKey] === 'number' ? currentBestScores[levelKey] : -Infinity;
+      if (score > prev) {
+        const newBestScores = { ...currentBestScores, [levelKey]: score };
+        await setDoc(userProgressRef, { bestScores: newBestScores }, { merge: true });
+        console.log("Saved new best score", { userId, level, score });
+      }
+    } else {
+      await setDoc(userProgressRef, { bestScores: { [levelKey]: score } }, { merge: true });
+      console.log("Created progress doc with best score", { userId, level, score });
+    }
+  } catch (error) {
+    console.error("Error saving level score:", error);
+  }
+};
+
+// Load all best scores as an object map { [level: string]: number }
+export const getLevelScores = async (userId) => {
+  if (!userId) return {};
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() || {};
+      return data.bestScores || {};
+    }
+    return {};
+  } catch (error) {
+    console.error("Error getting level scores:", error);
+    return {};
+  }
+};
+
+export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore and getLevelScores are exported individually

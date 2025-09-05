@@ -5,7 +5,7 @@ import Fretboard from "./Fretboard";
 import Button from "../../components/ui/button"; // Adjusted path to root ui components
 import GenDotList, { ManualDotPosition as ManualDotPositionFunction, NoteDot, Note } from "./DotPositions";
 import { User as FirebaseUser } from 'firebase/auth';
-import { saveUserLevel } from "../../firebase"; // Adjusted path to root firebase
+import { saveUserLevel, saveLevelScore } from "../../firebase"; // Adjusted path to root firebase
 import { ThemeName, ThemePalette } from '../ThemeContext';
 import { UI_SIZES } from './uiConstants';
 import AnimatedFeedback from './AnimatedFeedback';
@@ -65,6 +65,9 @@ interface GameScreenProps {
   numberOfPositions: number;
   setNumberOfPositions: (num: number) => void;
   ManageResultMessage: (message: string) => void;
+  // Best scores state from parent
+  bestScores: Record<string, number>;
+  setBestScores: (updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
   // UI_SIZES is imported directly
 }
 
@@ -123,6 +126,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
   numberOfPositions,
   setNumberOfPositions,
   ManageResultMessage,
+  bestScores,
+  setBestScores,
 }) => {
   const { width, height } = Dimensions.get('window');
   const shortDim = Math.min(width, height);
@@ -272,9 +277,28 @@ const GameScreen: React.FC<GameScreenProps> = ({
               saveUserLevel(user.uid, newUnlockedLevel); // saveUserLevel is imported directly
             }
           }
+          // Save best score for this level (campaign mode)
+          if (campaignMode && user && selectedLevel) {
+            const levelKey = String(selectedLevel);
+            const prevBest = typeof bestScores[levelKey] === 'number' ? bestScores[levelKey] : -Infinity;
+            if (score > prevBest) {
+              setBestScores((prev) => ({ ...prev, [levelKey]: score }));
+              // Fire and forget
+              saveLevelScore(user.uid, selectedLevel, score);
+            }
+          }
         } else {
           playLevelEndSound(false);
           ManageResultMessage("💔 Level Failed 💔");
+          // Even on fail we may still set a best score if it's higher than previous
+          if (campaignMode && user && selectedLevel) {
+            const levelKey = String(selectedLevel);
+            const prevBest = typeof bestScores[levelKey] === 'number' ? bestScores[levelKey] : -Infinity;
+            if (score > prevBest) {
+              setBestScores((prev) => ({ ...prev, [levelKey]: score }));
+              saveLevelScore(user.uid, selectedLevel, score);
+            }
+          }
         }
         setLevelEndSoundPlayed(true); // Set the flag after playing the sound
         // Optionally, navigate away or disable further interactions after a delay
