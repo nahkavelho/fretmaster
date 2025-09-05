@@ -8,6 +8,7 @@ interface CampaignProps {
   onBack: () => void
   onLevelSelect: (level: number) => void
   unlockedLevel: number
+  bestScores: Record<string, number>
 }
 
 const LEVEL_COUNT = 36;
@@ -60,7 +61,8 @@ const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.cr
 
 import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Added ThemeName and ThemePalette
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score }) => {
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score, bestScores }) => {
+
   const { themeName, palette } = React.useContext(ThemeContext);
   const styles = getStyles(themeName, palette); // Call getStyles
   const getLevelColor = React.useCallback((level: number) => {
@@ -89,7 +91,10 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
               activeOpacity={0.8}
               style={{ paddingVertical: 8, paddingHorizontal: 4 }}
             >
-              <Text style={[styles.questText, { color: getLevelColor(quest.id) }]}>{quest.name}</Text>
+              <Text style={[styles.questText, { color: getLevelColor(quest.id) }]}>
+                {quest.name}
+                {typeof bestScores[String(quest.id)] === 'number' ? `  •  Best: ${bestScores[String(quest.id)]}/30` : ''}
+              </Text>
             </TouchableOpacity>
           </View>
         ))}
