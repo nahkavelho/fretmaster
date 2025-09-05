@@ -12,7 +12,9 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
   // const opacity = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    if ("✅" === resultMessage || "❌" === resultMessage) {
+    if (!resultMessage) return;
+    const isQuick = (resultMessage === '✅' || resultMessage === '❌');
+    if (isQuick) {
       Animated.sequence([
         Animated.timing(feedbackAnimation, {
           toValue: 1,
@@ -74,7 +76,20 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
           }}>
             <Text style={{ fontSize: 56, fontWeight: 'bold', color: '#FF1744', textAlign: 'center' as const }}>✖</Text>
           </View>
-        ) : null}
+        ) : (
+          <View style={{
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            borderRadius: 16,
+            paddingHorizontal: 18,
+            paddingVertical: 12,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.12)'
+          }}>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#fff', textAlign: 'center' as const }}>
+              {resultMessage}
+            </Text>
+          </View>
+        )}
       </Animated.View>
     );
   }

@@ -141,9 +141,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const wrongSound = React.useRef<Audio.Sound | null>(null);
   const levelPassSound = React.useRef<Audio.Sound | null>(null);
   const levelLoseSound = React.useRef<Audio.Sound | null>(null);
+  const streakSound = React.useRef<Audio.Sound | null>(null);
   const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
-  const streakSound = React.useRef<Audio.Sound | null>(null);
   const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
   const [combo, setCombo] = React.useState(0);
   const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
@@ -256,18 +256,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
       clearGuessTimer();
     };
   }, [clearGuessTimer]);
-
-  // Restart timer whenever a new note is shown, or when campaign timing tier changes
-  React.useEffect(() => {
-    if (gameOver) {
-      clearGuessTimer();
-      return;
-    }
-    startGuessTimer();
-    return () => {
-      // Interval cleared by start/clear helpers
-    };
-  }, [noteDot, campaignMode, selectedLevel, gameOver, startGuessTimer, clearGuessTimer]);
 
   // Effect to handle level completion
   React.useEffect(() => {
@@ -445,13 +433,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastIncorrectNote(null);
                   setResultMessage(null);
                   setLevelEndSoundPlayed(false); // Reset flag for new game
-                  // Optionally, navigate away or disable further interactions after a delay
-                  // const timer = setTimeout(() => {
-                  //   if (currentScreen === 'Game') { // Check if still on game screen
-                  //      setScreen(campaignMode ? 'LevelSelectScreen' : 'MainMenuScreen'); // Use actual screen names
-                  //   }
-                  // }, 3000);
-                  // return () => clearTimeout(timer);
                 }}
               >
                 <Text style={{
@@ -478,6 +459,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setScore(0);
                   setNumberOfPositions(30);
                   setLevelEndSoundPlayed(false); // Reset flag when going back to menu
+                  setCombo(0);
                 }}
               >
                 <Text style={{
@@ -565,12 +547,9 @@ const GameScreen: React.FC<GameScreenProps> = ({
           )}
         </View>
 
-        {/* Score and Level Display - Centered Top (space reserved via paddingTop) */}
-        <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 8, right: 8, zIndex: 9 }}>
-          <Text
-            style={{ color: palette.text, fontWeight: 'bold', fontSize: isCompact ? 14 : 18, textAlign: 'center' as const }}
-            numberOfLines={2}
-          >
+        {/* Score and Level Display - Centered Top */}
+        <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
+          <Text style={{ color: palette.text, fontWeight: 'bold', fontSize: 18 }}>
             {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score} | Combo: {combo}{campaignMode && timeLeft !== null ? ` | Time: ${timeLeft}s` : ''}
           </Text>
         </View>
@@ -740,7 +719,6 @@ const GameScreen: React.FC<GameScreenProps> = ({
                         }
                         return generated;
                       })();
-
                   if (noteDot[2] === note) {
                     const newCombo = combo + 1;
                     setCombo(newCombo);
