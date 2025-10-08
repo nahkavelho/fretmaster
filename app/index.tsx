@@ -11,7 +11,7 @@ import GenDotList, { ManualDotPosition as ManualDotPositionFunction } from "./co
 import { NoteDot, Note } from "./components/DotPositions";
 import LoginScreen from '../LoginScreen';
 import { getAuth, onAuthStateChanged, User as FirebaseUser, signOut, Auth } from 'firebase/auth'; // Added FirebaseUser for clarity
-import { auth, getUserLevel, saveUserLevel, getLevelScores } from "../firebase"; // Add best scores API
+import { auth, getUserLevel, saveUserLevel, getLevelScores, getUserStats, resetProgress } from "../firebase"; // Add stats and reset APIs
 import Settings from "./components/Settings";
 import { ThemeContext, ThemeName, ThemePalette } from './ThemeContext';
 import { UI_SIZES } from './components/uiConstants';
@@ -87,6 +87,13 @@ export function FretboarderAppScreen() {
         } catch (e) {
           setBestScores({});
         }
+        // Load user stats
+        try {
+          const stats = await getUserStats(firebaseUser.uid);
+          setUserStats(stats || { totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] });
+        } catch (e) {
+          setUserStats({ totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] });
+        }
       } else {
         // User is logged out, reset level states if necessary
         setDifficulty(0);
@@ -132,6 +139,10 @@ export function FretboarderAppScreen() {
   const [numberOfPositions, setNumberOfPositions] = React.useState<number>(30)
   const [selectedLevel, setSelectedLevel] = React.useState<number>(1)
   const [fullList, setFullList] = React.useState<boolean>(true)
+  const [freeModeTimeSeconds, setFreeModeTimeSeconds] = React.useState<number | null>(null)
+  const [soundEnabled, setSoundEnabled] = React.useState<boolean>(true)
+  const [hapticsEnabled, setHapticsEnabled] = React.useState<boolean>(true)
+  const [userStats, setUserStats] = React.useState<{ totalTimeSeconds: number; bestStreak: number; recentSessions: any[] }>({ totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] })
   const setLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -234,6 +245,10 @@ const NOTE_NAMES = (
     return (
       <Settings
         onBack={() => setScreen('menu')}
+        soundEnabled={soundEnabled}
+        setSoundEnabled={setSoundEnabled}
+        hapticsEnabled={hapticsEnabled}
+        setHapticsEnabled={setHapticsEnabled}
       />
     )
   }
@@ -298,6 +313,7 @@ const NOTE_NAMES = (
         // Best scores state
         bestScores={bestScores}
         setBestScores={setBestScores}
+        freeModeTimeSeconds={freeModeTimeSeconds}
       />
     );
   }
@@ -321,6 +337,20 @@ const NOTE_NAMES = (
         auth={auth} // Pass the auth instance from firebase.ts
         setLoggedIn={setLoggedIn}
         setScreen={setScreen}
+        bestScores={bestScores}
+        unlockedLevel={unlockedLevel}
+        userStats={userStats}
+        onResetProgress={async () => {
+          if (!user) return;
+          try {
+            await resetProgress(user.uid);
+            setUnlockedLevel(1);
+            setBestScores({});
+            setUserStats({ totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] });
+          } catch (e) {
+            // Optionally show an alert
+          }
+        }}
       />
     );
   }
@@ -339,10 +369,11 @@ const NOTE_NAMES = (
         styles={styles}
         themeName={themeName}
         palette={palette} // Pass palette to MenuScreen
-        onStartFreeMode={(level: number) => {
+        onStartFreeMode={(level: number, timeSeconds: number | null) => {
           // level is 0-12 per modal selection
           setCampaignMode(false);
           setDifficulty(level);
+          setFreeModeTimeSeconds(timeSeconds);
           setScreen('free');
         }}
       />

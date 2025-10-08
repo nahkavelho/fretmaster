@@ -109,4 +109,70 @@ export const getLevelScores = async (userId) => {
   }
 };
 
-export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore and getLevelScores are exported individually
+// Aggregate stats helpers
+// recentSessions: [{ ts: number, mode: 'campaign'|'free', level?: number, score: number, durationSec: number }]
+export const getUserStats = async (userId) => {
+  if (!userId) return { totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] };
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() || {};
+      return {
+        totalTimeSeconds: data.totalTimeSeconds || 0,
+        bestStreak: data.bestStreak || 0,
+        recentSessions: Array.isArray(data.recentSessions) ? data.recentSessions : [],
+      };
+    }
+    return { totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] };
+  } catch (e) {
+    console.error("Error getting user stats:", e);
+    return { totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] };
+  }
+};
+
+export const saveSessionStats = async (userId, { mode, level, score, durationSec, streak }) => {
+  if (!userId) return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    const data = docSnap.exists() ? (docSnap.data() || {}) : {};
+    const prevTotal = data.totalTimeSeconds || 0;
+    const prevBestStreak = data.bestStreak || 0;
+    const prevSessions = Array.isArray(data.recentSessions) ? data.recentSessions : [];
+    const session = {
+      ts: Date.now(),
+      mode: mode || 'free',
+      level: typeof level === 'number' ? level : null,
+      score: typeof score === 'number' ? score : 0,
+      durationSec: typeof durationSec === 'number' ? durationSec : 0,
+      streak: typeof streak === 'number' ? streak : 0,
+    };
+    const updated = {
+      totalTimeSeconds: prevTotal + session.durationSec,
+      bestStreak: Math.max(prevBestStreak, session.streak || 0),
+      recentSessions: [session, ...prevSessions].slice(0, 5),
+    };
+    await setDoc(userProgressRef, updated, { merge: true });
+  } catch (e) {
+    console.error("Error saving session stats:", e);
+  }
+};
+
+export const resetProgress = async (userId) => {
+  if (!userId) return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    await setDoc(userProgressRef, {
+      highestLevelCompleted: 1,
+      bestScores: {},
+      totalTimeSeconds: 0,
+      bestStreak: 0,
+      recentSessions: [],
+    }, { merge: true });
+  } catch (e) {
+    console.error("Error resetting progress:", e);
+  }
+};
+
+export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore, getLevelScores, getUserStats, saveSessionStats, resetProgress are exported individually

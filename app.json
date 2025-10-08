@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "fretboarder",
-    "slug": "fretboarder",
+    "name": "FretMaster",
+    "slug": "fretmaster",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "fretmaster",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, Switch } from "react-native";
 import Button from "../../components/ui/button";
 import { Picker } from '@react-native-picker/picker';
 
@@ -7,6 +7,10 @@ import { ThemeContext, THEME_PALETTES, ThemeName, ThemePalette } from '../ThemeC
 
 interface SettingsProps {
   onBack: () => void;
+  soundEnabled: boolean;
+  setSoundEnabled: (value: boolean) => void;
+  hapticsEnabled: boolean;
+  setHapticsEnabled: (value: boolean) => void;
 }
 
 const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.create({
@@ -74,11 +78,30 @@ const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.creat
     borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
     marginVertical: 4,
   },
+  swatchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  swatch: {
+    width: 28,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  swatchLabel: {
+    color: palette.text,
+    fontSize: 12,
+    marginRight: 12,
+  },
   
 });
 
 
-const Settings: React.FC<SettingsProps> = ({ onBack }) => {
+const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabled, hapticsEnabled, setHapticsEnabled }) => {
   const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
   const { width } = useWindowDimensions();
   const isPortrait = width < 400;
