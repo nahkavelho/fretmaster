@@ -10,15 +10,17 @@ interface MenuScreenProps {
   styles: any; // Consider a more specific type based on getGlobalStyles
   themeName: ThemeName;
   palette: ThemePalette; // Added palette for direct use if needed
+  onStartFreeMode: (difficulty: number) => void;
 }
 
-const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, palette }) => {
+const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, palette, onStartFreeMode }) => {
+  const [showDifficulty, setShowDifficulty] = React.useState(false);
   const handleCampaign = () => {
     setScreen('campaign', true);
   };
 
   const handleFreeMode = () => {
-    setScreen('free', false);
+    setShowDifficulty(true);
   };
 
   const handleSettings = () => {
@@ -75,15 +77,69 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
       </Button>
     </View>
   );
-
   return (
-    <Menu
-      onCampaign={handleCampaign}
-      onFreeMode={handleFreeMode}
-      onSettings={handleSettings}
-      extraButtons={extraButtons}
-    />
+    <>
+      <Menu
+        onCampaign={handleCampaign}
+        onFreeMode={handleFreeMode}
+        onSettings={handleSettings}
+        extraButtons={extraButtons}
+      />
+
+      {showDifficulty && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          alignItems: 'center' as const,
+          justifyContent: 'center' as const,
+          zIndex: 999,
+        }}>
+          <View style={{
+            backgroundColor: themeName === 'rocksmith' ? '#232526' : palette.card,
+            borderRadius: 16,
+            padding: 16,
+            width: 320,
+            borderWidth: themeName === 'rocksmith' ? 2 : 1,
+            borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+          }}>
+            <Text style={{ color: palette.text, fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' as const }}>Select Difficulty</Text>
+            <Text style={{ color: palette.textSecondary, fontSize: 12, marginBottom: 12, textAlign: 'center' as const }}>Number of frets/positions</Text>
+            <View style={{ flexDirection: 'row' as const, flexWrap: 'wrap' as const, justifyContent: 'center' as const }}>
+              {[...Array(13).keys()].map((level) => (
+                <Button
+                  key={level}
+                  style={{
+                    margin: 4,
+                    minWidth: 44,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                    backgroundColor: themeName === 'rocksmith' ? palette.modalBackground : palette.button,
+                    borderWidth: themeName === 'rocksmith' ? 2 : 0,
+                    borderColor: themeName === 'rocksmith' ? palette.primary : undefined,
+                  }}
+                  onPress={() => { setShowDifficulty(false); onStartFreeMode(level); }}
+                >
+                  <Text style={{ color: themeName === 'rocksmith' ? palette.primary : palette.buttonText, fontWeight: 'bold' }}>{level}</Text>
+                </Button>
+              ))}
+            </View>
+            <View style={{ alignItems: 'center' as const, marginTop: 8 }}>
+              <Button
+                style={{ backgroundColor: themeName === 'rocksmith' ? '#232526' : '#AF8F6F', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16 }}
+                onPress={() => setShowDifficulty(false)}
+              >
+                <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#543310', fontWeight: 'bold' }}>Cancel</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
+    </>
   );
-};
+}
 
 export default MenuScreen;

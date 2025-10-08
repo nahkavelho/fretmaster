@@ -234,10 +234,6 @@ const NOTE_NAMES = (
     return (
       <Settings
         onBack={() => setScreen('menu')}
-        manualMode={manualMode}
-        setManualMode={setManualMode}
-        difficulty={difficulty}
-        setDifficulty={setDifficulty}
       />
     )
   }
@@ -343,6 +339,12 @@ const NOTE_NAMES = (
         styles={styles}
         themeName={themeName}
         palette={palette} // Pass palette to MenuScreen
+        onStartFreeMode={(level: number) => {
+          // level is 0-12 per modal selection
+          setCampaignMode(false);
+          setDifficulty(level);
+          setScreen('free');
+        }}
       />
     );
   }

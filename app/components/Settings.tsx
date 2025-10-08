@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Switch, ScrollView, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
 import Button from "../../components/ui/button";
 import { Picker } from '@react-native-picker/picker';
 
@@ -7,10 +7,6 @@ import { ThemeContext, THEME_PALETTES, ThemeName, ThemePalette } from '../ThemeC
 
 interface SettingsProps {
   onBack: () => void;
-  manualMode: boolean;
-  difficulty: number;
-  setManualMode: (value: boolean) => void;
-  setDifficulty: (value: number) => void;
 }
 
 const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.create({
@@ -78,16 +74,11 @@ const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.creat
     borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
     marginVertical: 4,
   },
-  switchTrack: {
-    backgroundColor: palette.fretboardBorder, // Or a specific switch track color
-  },
-  switchThumb: {
-    backgroundColor: palette.primary, // Or a specific switch thumb color
-  },
+  
 });
 
 
-const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, difficulty, setDifficulty }) => {
+const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
   const { width } = useWindowDimensions();
   const isPortrait = width < 400;
@@ -132,134 +123,6 @@ const Settings: React.FC<SettingsProps> = ({ onBack, manualMode, setManualMode, 
 
       </View>
       
-      <View style={s.settingRow}>
-        <View>
-          <Text style={s.settingLabel}>Manual Mode</Text>
-          <Text style={s.settingDescription}>
-            Enable precise control of note positions on the fretboard.
-            This mode is intended for debugging and works best on larger screens.
-          </Text>
-        </View>
-        <Switch
-          trackColor={{ false: "#CCCCCC", true: "#74512D" }}
-          thumbColor={manualMode ? "#F8F4E1" : "#F8F4E1"}
-          ios_backgroundColor="#CCCCCC"
-          onValueChange={(value) => setManualMode(value)}
-          value={manualMode}
-        />
-      </View>
-      <View style={s.settingRow}>
-        <View>
-          <Text style={s.settingLabel}>Change Difficulty</Text>
-          <Text style={s.settingDescription}>
-            How many positions are shown on the fretboard at once.
-            0 is open string, 1 is first fret, etc.
-          </Text>
-          <View style={{ marginTop: 12 }}>
-            {/* Responsive orientation: useWindowDimensions triggers re-render on change */}
-            {isLandscape ? (
-              <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'nowrap' }}>
-                {[...Array(13).keys()].map((level) => (
-                  <Button
-                    key={level}
-                    style={{
-                      backgroundColor: difficulty === level ? "#543310" : "#AF8F6F",
-                      marginHorizontal: 3,
-                      minWidth: 36,
-                      paddingVertical: 8,
-                      borderRadius: 8,
-                    }}
-                    onPress={() => setDifficulty(level)}
-                  >
-                    <Text style={{ color: "#F8F4E1", fontSize: 16 }}>{level}</Text>
-                  </Button>
-                ))}
-              </View>
-            ) : (
-              <>
-                <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 6 }}>
-                  {[...Array(7).keys()].map((level) => (
-                    <Button
-                      key={level}
-                      style={[
-                        {
-                          minWidth: 28,
-                          height: 28,
-                          paddingVertical: 0,
-                          paddingHorizontal: 0,
-                          marginHorizontal: 2,
-                          borderRadius: 6,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          borderWidth: themeName === 'rocksmith' ? 2 : 1,
-                          borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
-                          backgroundColor:
-                            themeName === 'rocksmith'
-                              ? (difficulty === level ? palette.primary : palette.modalBackground) // Rocksmith active/inactive
-                              : (difficulty === level ? palette.button : palette.modalBackground), // Other themes active/inactive
-                        },
-                      ]}
-                      onPress={() => setDifficulty(level)}
-                    >
-                      <Text style={{
-                        color:
-                          themeName === 'rocksmith'
-                            ? (difficulty === level ? palette.modalBackground : palette.primary) // Rocksmith text active/inactive
-                            : (difficulty === level ? palette.buttonText : palette.text), // Other themes text active/inactive
-                        fontWeight: 'bold',
-                        fontSize: 13,
-                        textAlign: 'center',
-                      }}>{level + 1}</Text>
-                    </Button>
-                  ))}
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                  {[...Array(6).keys()].map((i) => {
-                    const level = i + 7;
-                    return (
-                      <Button
-                        key={level}
-                        style={[
-                          {
-                            minWidth: 28,
-                            height: 28,
-                            paddingVertical: 0,
-                            paddingHorizontal: 0,
-                            marginHorizontal: 2,
-                            borderRadius: 6,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            borderWidth: themeName === 'rocksmith' ? 2 : 1,
-                            borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
-                            backgroundColor:
-                              themeName === 'rocksmith'
-                                ? (difficulty === level ? palette.primary : palette.modalBackground)
-                                : (difficulty === level ? palette.button : palette.modalBackground),
-                          },
-                        ]}
-                        onPress={() => setDifficulty(level)}
-                      >
-                        <Text style={{
-                          color:
-                            themeName === 'rocksmith'
-                              ? (difficulty === level ? palette.modalBackground : palette.primary)
-                              : (difficulty === level ? palette.buttonText : palette.text),
-                          fontWeight: 'bold',
-                          fontSize: 13,
-                          textAlign: 'center',
-                        }}>{level}</Text>
-                      </Button>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-          </View>
-          <Text style={{ color: palette.text, fontSize: 14, marginTop: 4 }}>Current Difficulty: {difficulty}</Text>
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-        </View>   
-      </View>
       
       <Button onPress={onBack} style={s.backButton}>
         <Text style={s.backButtonText}>Back to Menu</Text>
