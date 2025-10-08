@@ -5,7 +5,7 @@ import Fretboard from "./Fretboard";
 import Button from "../../components/ui/button"; // Adjusted path to root ui components
 import GenDotList, { ManualDotPosition as ManualDotPositionFunction, NoteDot, Note } from "./DotPositions";
 import { User as FirebaseUser } from 'firebase/auth';
-import { saveUserLevel, saveLevelScore } from "../../firebase"; // Adjusted path to root firebase
+import { saveUserLevel, saveLevelScore, saveSessionStats } from "../../firebase"; // Adjusted path to root firebase
 import { ThemeName, ThemePalette } from '../ThemeContext';
 import { UI_SIZES } from './uiConstants';
 import AnimatedFeedback from './AnimatedFeedback';
@@ -69,6 +69,7 @@ interface GameScreenProps {
   bestScores: Record<string, number>;
   setBestScores: (updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
   // UI_SIZES is imported directly
+  freeModeTimeSeconds: number | null;
 }
 
 const GameScreen: React.FC<GameScreenProps> = ({
@@ -128,6 +129,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   ManageResultMessage,
   bestScores,
   setBestScores,
+  freeModeTimeSeconds,
 }) => {
   const { width, height } = Dimensions.get('window');
   const shortDim = Math.min(width, height);
@@ -151,16 +153,18 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
   const [combo, setCombo] = React.useState(0);
+  const [maxCombo, setMaxCombo] = React.useState(0);
+  const [sessionStartedAt, setSessionStartedAt] = React.useState<number | null>(null);
   const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const getTimePerGuess = React.useCallback(() => {
-    if (!campaignMode) return null; // Timer only active in campaign as requested
+    if (!campaignMode) return freeModeTimeSeconds; // Use selected time in Free Mode (null = no timer)
     if (selectedLevel >= 1 && selectedLevel <= 12) return 8; // Beginner
     if (selectedLevel >= 13 && selectedLevel <= 24) return 5; // Intermediate
     if (selectedLevel >= 25 && selectedLevel <= 36) return 3; // Advanced
     return 8; // Default safety
-  }, [campaignMode, selectedLevel]);
+  }, [campaignMode, selectedLevel, freeModeTimeSeconds]);
 
   const clearGuessTimer = React.useCallback(() => {
     if (timerIntervalRef.current) {
@@ -300,6 +304,21 @@ const GameScreen: React.FC<GameScreenProps> = ({
             }
           }
         }
+        // Save session stats (duration + best streak)
+        (async () => {
+          try {
+            if (user && sessionStartedAt) {
+              const durationSec = Math.max(0, Math.floor((Date.now() - sessionStartedAt) / 1000));
+              await saveSessionStats(user.uid, {
+                mode: campaignMode ? 'campaign' : 'free',
+                level: campaignMode ? selectedLevel : null,
+                score,
+                durationSec,
+                streak: maxCombo,
+              });
+            }
+          } catch {}
+        })();
         setLevelEndSoundPlayed(true); // Set the flag after playing the sound
         // Optionally, navigate away or disable further interactions after a delay
         // const timer = setTimeout(() => {

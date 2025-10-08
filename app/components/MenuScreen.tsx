@@ -10,11 +10,22 @@ interface MenuScreenProps {
   styles: any; // Consider a more specific type based on getGlobalStyles
   themeName: ThemeName;
   palette: ThemePalette; // Added palette for direct use if needed
-  onStartFreeMode: (difficulty: number) => void;
+  onStartFreeMode: (difficulty: number, timeSeconds: number | null) => void;
 }
 
 const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, palette, onStartFreeMode }) => {
   const [showDifficulty, setShowDifficulty] = React.useState(false);
+  const [selectedTime, setSelectedTime] = React.useState<number | null>(null); // null = No Timer
+  const getDiffLabel = (level: number) => {
+    if (level <= 4) return 'Beginner';
+    if (level <= 8) return 'Intermediate';
+    return 'Hard';
+  };
+  const getDiffColor = (level: number) => {
+    if (level <= 4) return '#2ecc40';
+    if (level <= 8) return '#FFC107';
+    return '#FF5555';
+  };
   const handleCampaign = () => {
     setScreen('campaign', true);
   };
@@ -100,11 +111,12 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
         }}>
           <View style={{
             backgroundColor: themeName === 'rocksmith' ? '#232526' : palette.card,
-            borderRadius: 16,
+            borderRadius: 18,
             padding: 16,
-            width: 320,
+            width: 340,
             borderWidth: themeName === 'rocksmith' ? 2 : 1,
             borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+            shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8,
           }}>
             <Text style={{ color: palette.text, fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' as const }}>Select Difficulty</Text>
             <Text style={{ color: palette.textSecondary, fontSize: 12, marginBottom: 12, textAlign: 'center' as const }}>Number of frets/positions</Text>
@@ -113,19 +125,52 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
                 <Button
                   key={level}
                   style={{
-                    margin: 4,
-                    minWidth: 44,
-                    paddingVertical: 8,
-                    borderRadius: 8,
-                    backgroundColor: themeName === 'rocksmith' ? palette.modalBackground : palette.button,
-                    borderWidth: themeName === 'rocksmith' ? 2 : 0,
-                    borderColor: themeName === 'rocksmith' ? palette.primary : undefined,
+                    margin: 6,
+                    minWidth: 78,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: themeName === 'rocksmith' ? palette.modalBackground : palette.card,
+                    borderWidth: 2,
+                    borderColor: getDiffColor(level),
+                    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4,
                   }}
-                  onPress={() => { setShowDifficulty(false); onStartFreeMode(level); }}
+                  onPress={() => { setShowDifficulty(false); onStartFreeMode(level, selectedTime); }}
                 >
-                  <Text style={{ color: themeName === 'rocksmith' ? palette.primary : palette.buttonText, fontWeight: 'bold' }}>{level}</Text>
+                  <View style={{ alignItems: 'center' as const }}>
+                    <Text style={{ color: themeName === 'rocksmith' ? palette.primary : palette.text, fontWeight: 'bold', fontSize: 18 }}>{level}</Text>
+                    <Text style={{ color: getDiffColor(level), fontSize: 10, marginTop: 2 }}>{getDiffLabel(level)}</Text>
+                  </View>
                 </Button>
               ))}
+            </View>
+
+            <Text style={{ color: palette.text, fontSize: 16, fontWeight: 'bold', marginTop: 10, marginBottom: 6, textAlign: 'center' as const }}>Time Per Guess (Optional)</Text>
+            <View style={{ flexDirection: 'row' as const, justifyContent: 'center' as const, flexWrap: 'wrap' as const }}>
+              {[
+                { label: 'No Timer', value: null },
+                { label: '3s', value: 3 },
+                { label: '5s', value: 5 },
+                { label: '8s', value: 8 },
+              ].map((opt) => {
+                const isActive = selectedTime === opt.value;
+                return (
+                  <Button
+                    key={String(opt.value)}
+                    style={{
+                      margin: 4,
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 10,
+                      backgroundColor: isActive ? (themeName === 'rocksmith' ? palette.primary : '#2ecc40') : (themeName === 'rocksmith' ? '#1b1d1e' : palette.modalBackground),
+                      borderWidth: themeName === 'rocksmith' ? 2 : 1,
+                      borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+                    }}
+                    onPress={() => setSelectedTime(opt.value as number | null)}
+                  >
+                    <Text style={{ color: isActive ? (themeName === 'rocksmith' ? '#232526' : '#fff') : palette.text, fontWeight: 'bold' }}>{opt.label}</Text>
+                  </Button>
+                );
+              })}
             </View>
             <View style={{ alignItems: 'center' as const, marginTop: 8 }}>
               <Button

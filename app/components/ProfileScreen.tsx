@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, Alert } from 'react-native';
+import { View, Text, Alert, ScrollView } from 'react-native';
 import { User as FirebaseUser, Auth, signOut } from 'firebase/auth';
 import Button from '../../components/ui/button'; // Adjusted path
 import { ThemeName, ThemePalette } from '../ThemeContext'; // Adjusted path
@@ -12,6 +12,10 @@ interface ProfileScreenProps {
   auth: Auth;
   setLoggedIn: (loggedIn: boolean) => void;
   setScreen: (screen: string) => void;
+  bestScores: Record<string, number>;
+  unlockedLevel: number;
+  userStats: { totalTimeSeconds: number; bestStreak: number; recentSessions: Array<{ ts: number; mode: 'campaign'|'free'; level?: number|null; score: number; durationSec: number; streak: number }> };
+  onResetProgress: () => Promise<void>;
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -22,6 +26,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   auth,
   setLoggedIn,
   setScreen,
+  bestScores,
+  unlockedLevel,
+  userStats,
+  onResetProgress,
 }) => {
   if (!user) {
     // Should ideally be handled by a loading state or auth check before rendering this screen
@@ -33,8 +41,29 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
   }
 
+  // Compute simple progress aggregates
+  const levelKeys = Object.keys(bestScores || {});
+  const completedLevels = levelKeys.length;
+  const totalCorrect = levelKeys.reduce((sum, k) => sum + (typeof bestScores[k] === 'number' ? bestScores[k] : 0), 0);
+  const bestScore = levelKeys.reduce((max, k) => Math.max(max, bestScores[k] || 0), 0);
+  const avgScore = completedLevels ? Math.round((totalCorrect / completedLevels) * 10) / 10 : 0;
+  const topThree = levelKeys
+    .map((k) => ({ level: Number(k), score: bestScores[k] }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const totalTimeMinutes = Math.floor((userStats?.totalTimeSeconds || 0) / 60);
+  const formatTs = (ts: number) => {
+    try {
+      const d = new Date(ts);
+      return d.toLocaleString();
+    } catch {
+      return String(ts);
+    }
+  };
+
   return (
-    <View style={themeName === 'rocksmith' ? styles.root : { backgroundColor: '#F8F4E1', flex: 1, justifyContent: 'center' as const, alignItems: 'center' as const }}>
+    <ScrollView style={{ flex: 1, backgroundColor: themeName === 'rocksmith' ? styles.root?.backgroundColor || '#181A1B' : '#F8F4E1' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 24 }}>
       <View style={themeName === 'rocksmith' ?
         [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center' as const, minWidth: 320, maxWidth: 380, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
         :
@@ -91,6 +120,42 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
         }}>
           {user?.email || 'N/A'}
         </Text>
+
+        {/* Progress Section */}
+        <View style={{ width: '100%', marginTop: 8, marginBottom: 8 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: themeName === 'rocksmith' ? (styles.menuButtonText?.color || '#FFD900') : '#543310', marginBottom: 10 }}>Progress</Text>
+          <View style={{
+            backgroundColor: themeName === 'rocksmith' ? '#2b2e2f' : '#F8F4E1',
+            borderRadius: 12,
+            padding: 12,
+            borderWidth: themeName === 'rocksmith' ? 1 : 1,
+            borderColor: themeName === 'rocksmith' ? '#3a3d3e' : '#d8c7b3',
+          }}>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Levels unlocked: <Text style={{ fontWeight: 'bold' }}>{unlockedLevel}</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Levels with a score: <Text style={{ fontWeight: 'bold' }}>{completedLevels}</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Total correct notes: <Text style={{ fontWeight: 'bold' }}>{totalCorrect}</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Best single level score: <Text style={{ fontWeight: 'bold' }}>{bestScore}/30</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Average score: <Text style={{ fontWeight: 'bold' }}>{avgScore}</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16, marginBottom: 6 }}>Total time played: <Text style={{ fontWeight: 'bold' }}>{totalTimeMinutes} min</Text></Text>
+            <Text style={{ color: palette.text, fontSize: 16 }}>Best streak: <Text style={{ fontWeight: 'bold' }}>{userStats?.bestStreak || 0}</Text></Text>
+          </View>
+        </View>
+
+        
+
+        {/* Recent Sessions */}
+        <View style={{ width: '100%', marginTop: 16 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: themeName === 'rocksmith' ? (styles.menuButtonText?.color || '#FFD900') : '#543310', marginBottom: 10 }}>Recent Sessions</Text>
+          {(!userStats?.recentSessions || userStats.recentSessions.length === 0) ? (
+            <Text style={{ color: palette.textSecondary }}>No recent sessions.</Text>
+          ) : (
+            userStats.recentSessions.map((s, idx) => (
+              <View key={idx} style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: themeName === 'rocksmith' ? '#3a3d3e' : '#d8c7b3' }}>
+                <Text style={{ color: palette.text }}>{formatTs(s.ts)} — {s.mode === 'campaign' ? `Level ${s.level}` : 'Free'} — Score {s.score}/30 — {s.durationSec}s — Streak {s.streak}</Text>
+              </View>
+            ))
+          )}
+        </View>
         <Button
           style={themeName === 'rocksmith' ?
             [styles.menuButton, { width: 180, marginTop: 4, marginBottom: 8, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
@@ -118,6 +183,27 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
         >
           <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
         </Button>
+
+        {/* Reset Progress */}
+        <Button
+          style={themeName === 'rocksmith' ?
+            [styles.menuButton, { width: 200, marginTop: 8, marginBottom: 8, marginLeft:0, marginRight:0, alignSelf: 'auto' }]
+            :
+            { backgroundColor: "#b22222", padding: 14, borderRadius: 12, width: 200, marginTop: 12, shadowColor: '#b22222', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
+          }
+          onPress={() => {
+            Alert.alert(
+              'Reset Progress',
+              'This will clear your best scores, stats, and set unlocked level to 1. Continue?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Reset', style: 'destructive', onPress: async () => { await onResetProgress(); } },
+              ]
+            )
+          }}
+        >
+          <Text style={{ color: '#F8F4E1', fontWeight: 'bold', fontSize: 16 }}>Reset Progress</Text>
+        </Button>
         <Button
           style={themeName === 'rocksmith' ?
             [styles.menuButton, { width: 180, marginTop: 8, marginBottom: 0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
@@ -129,7 +215,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

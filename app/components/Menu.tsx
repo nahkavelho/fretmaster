@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemeContext } from '../ThemeContext';
 import Button from "../../components/ui/button";
 
@@ -33,7 +34,32 @@ const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraBu
   
   return (
     <View className="flex-1 justify-center items-center" style={{ backgroundColor: palette.background }}>
-      <Text style={{ color: palette.primary, fontSize: 32, fontWeight: "bold", marginBottom: 32 }}>Fretboard Trainer</Text>
+      <View style={{ alignItems: 'center', marginBottom: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{
+            width: 44, height: 44, borderRadius: 22,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: palette.card,
+            borderWidth: 2, borderColor: palette.primary,
+          }}>
+            <MaterialCommunityIcons name="guitar-pick" size={22} color={palette.primary} />
+          </View>
+          <Text style={{
+            color: palette.primary,
+            fontSize: 36,
+            fontWeight: '900',
+            letterSpacing: 1.0,
+            textShadowColor: palette.shadow,
+            textShadowOffset: { width: 0, height: 2 },
+            textShadowRadius: 6,
+          }}>
+            FretMaster
+          </Text>
+        </View>
+        <Text style={{ color: palette.textSecondary, marginTop: 6, fontSize: 13 }}>
+          Effortless, easy fretboard mastery
+        </Text>
+      </View>
       <Button onPress={onCampaign} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 2 : 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.primary : palette.buttonText }]}>Campaign</Text>
       </Button>
