@@ -154,6 +154,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [levelEndSoundPlayed, setLevelEndSoundPlayed] = React.useState(false);
   const [combo, setCombo] = React.useState(0);
   const [maxCombo, setMaxCombo] = React.useState(0);
+  const comboScale = React.useRef(new Animated.Value(1)).current;
   const [sessionStartedAt, setSessionStartedAt] = React.useState<number | null>(null);
   const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -264,6 +265,14 @@ const GameScreen: React.FC<GameScreenProps> = ({
       streakSound.current?.unloadAsync();
       clearGuessTimer();
     };
+
+  // Pulse the combo display when combo increases
+  React.useEffect(() => {
+    Animated.sequence([
+      Animated.spring(comboScale, { toValue: 1.12, useNativeDriver: true, speed: 20, bounciness: 6 }),
+      Animated.spring(comboScale, { toValue: 1.0, useNativeDriver: true, speed: 20, bounciness: 6 }),
+    ]).start();
+  }, [combo, comboScale]);
   }, [clearGuessTimer]);
 
   // Effect to handle level completion
@@ -518,17 +527,17 @@ const GameScreen: React.FC<GameScreenProps> = ({
         <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 12 }}>
           <Button
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              paddingVertical: 0,
-              paddingHorizontal: 0,
+              width: 88,
+              height: 36,
+              borderRadius: 18,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
               alignItems: 'center' as const,
               justifyContent: 'center' as const,
             }}
             onPress={() => setMenuOpen((v) => !v)}
           >
-            <Text style={{ color: palette.buttonText, fontWeight: 'bold', fontSize: 16 }}>☰</Text>
+            <Text style={{ color: palette.buttonText, fontWeight: 'bold', fontSize: 16 }}>Menu</Text>
           </Button>
 
           {menuOpen && (
@@ -590,11 +599,49 @@ const GameScreen: React.FC<GameScreenProps> = ({
           )}
         </View>
 
-        {/* Score and Level Display - Centered Top */}
+        {/* Score and Level Display - Centered Top (Enhanced HUD) */}
         <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
-          <Text style={{ color: palette.text, fontWeight: 'bold', fontSize: 18 }}>
-            {campaignMode ? `Level: ${selectedLevel} | ` : ''}Guesses: {30 - numberOfPositions}/30 | Score: {score} | Combo: {combo}{campaignMode && timeLeft !== null ? ` | Time: ${timeLeft}s` : ''}
-          </Text>
+          <View style={{
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            gap: 8,
+            backgroundColor: themeName === 'rocksmith' ? '#1b1d1e' : palette.card,
+            borderRadius: 14,
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderWidth: themeName === 'rocksmith' ? 0.5 : 1,
+            borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+            shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+          }}>
+            {campaignMode && (
+              <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#E0C097', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder }}>
+                <Text style={{ color: themeName === 'rocksmith' ? palette.primary : '#543310', fontWeight: '900', fontSize: 14 }}>Lvl</Text>
+                <Text style={{ color: themeName === 'rocksmith' ? palette.primary : '#543310', fontWeight: '900', fontSize: 16, marginLeft: 6 }}>{selectedLevel}</Text>
+              </View>
+            )}
+            <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#fffbe8', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? '#3a3d3e' : palette.fretboardBorder }}>
+              <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#74512D', fontWeight: 'bold' }}>🎯</Text>
+              <Text style={{ color: palette.text, fontWeight: 'bold', marginLeft: 6 }}>Guesses</Text>
+              <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#2ecc40', fontWeight: '900', marginLeft: 6 }}>{30 - numberOfPositions}/30</Text>
+            </View>
+            <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#fffbe8', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? '#3a3d3e' : palette.fretboardBorder }}>
+              <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#74512D', fontWeight: 'bold' }}>🏆</Text>
+              <Text style={{ color: palette.text, fontWeight: 'bold', marginLeft: 6 }}>Score</Text>
+              <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#2ecc40', fontWeight: '900', marginLeft: 6 }}>{score}</Text>
+            </View>
+            <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#fffbe8', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? '#3a3d3e' : palette.fretboardBorder }}>
+              <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#74512D', fontWeight: 'bold' }}>🔥</Text>
+              <Text style={{ color: palette.text, fontWeight: 'bold', marginLeft: 6 }}>Combo</Text>
+              <Animated.Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#FF5555', fontWeight: '900', marginLeft: 6, transform: [{ scale: comboScale }] }}>{combo}</Animated.Text>
+            </View>
+            {campaignMode && timeLeft !== null && (
+              <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#fffbe8', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? '#3a3d3e' : palette.fretboardBorder }}>
+                <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#74512D', fontWeight: 'bold' }}>⏱</Text>
+                <Text style={{ color: palette.text, fontWeight: 'bold', marginLeft: 6 }}>Time</Text>
+                <Text style={{ color: themeName === 'rocksmith' ? '#FFD900' : '#2979FF', fontWeight: '900', marginLeft: 6 }}>{timeLeft}s</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Animated Feedback */}
@@ -735,8 +782,8 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     borderRadius: noteBtnBorderRadius,
                     margin: 6,
                   },
-                  lastCorrectNote === note ? { backgroundColor: '#2ecc40', borderWidth: 2, borderColor: '#145a1f' } : null,
-                  lastIncorrectNote === note ? { backgroundColor: '#ff5555', borderWidth: 2, borderColor: '#a10000' } : null,
+                  lastCorrectNote === note ? { backgroundColor: '#2ecc40', borderWidth: 0.5, borderColor: '#145a1f' } : null,
+                  lastIncorrectNote === note ? { backgroundColor: '#ff5555', borderWidth: 0.5, borderColor: '#a10000' } : null,
                 ]}
                 onPress={async () => {
                   // User answered: cancel timer for this guess

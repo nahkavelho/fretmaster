@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
-import { Pressable, Text, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, Text, StyleProp, ViewStyle, Animated } from 'react-native';
 import { TextClassContext } from '~/components/ui/text';
 import { cn } from '~/lib/utils';
 
@@ -62,9 +62,12 @@ type ButtonProps = React.ComponentPropsWithoutRef<typeof Pressable> &
 
 import { ThemeContext } from '../../app/ThemeContext';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
   ({ className, variant, size, children, style, ...props }, ref) => {
     const { themeName, palette } = React.useContext(ThemeContext);
+    const scale = React.useRef(new Animated.Value(1)).current;
 
     let bgColor, borderColor, textColor;
 
@@ -86,29 +89,42 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
       // For simplicity, let's assume destructive buttons always have white text or it's handled by palette.buttonText on a destructive-specific button color
       textColor = '#FFFFFF'; // Or palette.destructiveButtonText if we add it
     }
+    const handlePressIn = (e: any) => {
+      Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 20, bounciness: 6 }).start();
+      props.onPressIn && props.onPressIn(e);
+    };
+
+    const handlePressOut = (e: any) => {
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 6 }).start();
+      props.onPressOut && props.onPressOut(e);
+    };
+
     return (
-      <Pressable
+      <AnimatedPressable
         ref={ref}
         role='button'
         style={[
           {
             backgroundColor: bgColor,
             borderColor: borderColor,
-            borderWidth: 2,
+            borderWidth: 1,
             borderRadius: 12,
             paddingVertical: 12,
             paddingHorizontal: 24,
             alignItems: 'center' as const,
             opacity: props.disabled ? 0.5 : 1,
+            transform: [{ scale }],
           },
           style,
         ] as StyleProp<ViewStyle>}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         {...props}
       >
         {typeof children === 'string' ? (
           <Text style={{ color: textColor, fontWeight: 'bold', fontSize: 18 }}>{children}</Text>
         ) : children}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 );

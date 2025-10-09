@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { View, Text, Alert, ScrollView } from 'react-native';
+import { View, Text, Alert, ScrollView, useWindowDimensions, StatusBar, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { User as FirebaseUser, Auth, signOut } from 'firebase/auth';
 import Button from '../../components/ui/button'; // Adjusted path
 import { ThemeName, ThemePalette } from '../ThemeContext'; // Adjusted path
@@ -31,6 +32,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   userStats,
   onResetProgress,
 }) => {
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const cardWidth = Math.min(width * 0.92, isTablet ? 560 : 420);
   if (!user) {
     // Should ideally be handled by a loading state or auth check before rendering this screen
     // For now, matching the original logic if user somehow becomes null while on this screen
@@ -63,9 +67,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: themeName === 'rocksmith' ? styles.root?.backgroundColor || '#181A1B' : '#F8F4E1' }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 24 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeName === 'rocksmith' ? styles.root?.backgroundColor || '#181A1B' : '#F8F4E1' }}>
+      {Platform.OS === 'android' && (
+        <StatusBar backgroundColor={themeName === 'rocksmith' ? '#232526' : '#F8F4E1'} barStyle={themeName === 'rocksmith' ? 'light-content' : 'dark-content'} />
+      )}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 24 }}>
       <View style={themeName === 'rocksmith' ?
-        [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center' as const, minWidth: 320, maxWidth: 380, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
+        [styles.menuButton, { backgroundColor: '#232526', padding: 32, alignItems: 'center' as const, width: cardWidth, marginBottom:0, marginLeft:0, marginRight:0, alignSelf: 'auto' }] 
         :
         {
           backgroundColor: '#E0C097',
@@ -77,8 +85,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
           shadowRadius: 16,
           shadowOffset: { width: 0, height: 4 },
           elevation: 8,
-          minWidth: 320,
-          maxWidth: 380,
+          width: cardWidth,
         }
       }>
         <View style={{
@@ -215,7 +222,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#543310", fontWeight: "bold", fontSize: 18 }}>Back to Menu</Text>
         </Button>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

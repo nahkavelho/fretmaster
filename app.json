@@ -3,7 +3,7 @@
     "name": "FretMaster",
     "slug": "fretmaster",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fretmaster",
     "userInterfaceStyle": "automatic",
@@ -25,7 +25,13 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.pekerage.fretboarder"
+      "package": "com.pekerage.fretboarder",
+      "permissions": [],
+      "softwareKeyboardLayoutMode": "pan",
+      "statusBar": {
+        "backgroundColor": "#232526",
+        "translucent": false
+      }
     },
     "web": {
       "bundler": "metro",
@@ -37,7 +43,7 @@
       [
         "expo-screen-orientation",
         {
-          "initialOrientation": "DEFAULT"
+          "initialOrientation": "PORTRAIT_UP"
         }
       ],
       "expo-font"

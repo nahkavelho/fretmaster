@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { View, Text, Alert, BackHandler, Platform, StyleSheet } from 'react-native';
+import { View, Text, Alert, BackHandler, Platform, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../components/ui/button'; // Path to root components/ui/button
 import Menu from './Menu'; // Path to components/Menu
 import { UI_SIZES } from './uiConstants'; // Path to components/uiConstants
@@ -89,7 +90,10 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
     </View>
   );
   return (
-    <>
+    <SafeAreaView style={{ flex: 1 }}>
+      {Platform.OS === 'android' && (
+        <StatusBar backgroundColor={themeName === 'rocksmith' ? '#232526' : palette.background} barStyle={themeName === 'rocksmith' ? 'light-content' : 'dark-content'} />
+      )}
       <Menu
         onCampaign={handleCampaign}
         onFreeMode={handleFreeMode}
@@ -114,7 +118,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
             borderRadius: 18,
             padding: 16,
             width: 340,
-            borderWidth: themeName === 'rocksmith' ? 2 : 1,
+            borderWidth: themeName === 'rocksmith' ? 1 : 1,
             borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
             shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 8,
           }}>
@@ -130,7 +134,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
                     paddingVertical: 10,
                     borderRadius: 12,
                     backgroundColor: themeName === 'rocksmith' ? palette.modalBackground : palette.card,
-                    borderWidth: 2,
+                    borderWidth: 1,
                     borderColor: getDiffColor(level),
                     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4,
                   }}
@@ -162,7 +166,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
                       paddingHorizontal: 12,
                       borderRadius: 10,
                       backgroundColor: isActive ? (themeName === 'rocksmith' ? palette.primary : '#2ecc40') : (themeName === 'rocksmith' ? '#1b1d1e' : palette.modalBackground),
-                      borderWidth: themeName === 'rocksmith' ? 2 : 1,
+                      borderWidth: themeName === 'rocksmith' ? 1 : 1,
                       borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
                     }}
                     onPress={() => setSelectedTime(opt.value as number | null)}
@@ -183,7 +187,7 @@ const MenuScreen: React.FC<MenuScreenProps> = ({ setScreen, styles, themeName, p
           </View>
         </View>
       )}
-    </>
+    </SafeAreaView>
   );
 }
 

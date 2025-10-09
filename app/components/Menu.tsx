@@ -60,13 +60,13 @@ const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraBu
           Effortless, easy fretboard mastery
         </Text>
       </View>
-      <Button onPress={onCampaign} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 2 : 0 }]}>
+      <Button onPress={onCampaign} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.primary : palette.buttonText }]}>Campaign</Text>
       </Button>
-      <Button onPress={onFreeMode} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.text : 'transparent', borderWidth: themeName === 'rocksmith' ? 2 : 0 }]}>
+      <Button onPress={onFreeMode} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.text : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.text : palette.buttonText }]}>Free Mode</Text>
       </Button>
-      <Button onPress={onSettings} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 2 : 0, marginBottom: 0 }]}>
+      <Button onPress={onSettings} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0, marginBottom: 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.primary : palette.buttonText }]}>Settings</Text>
       </Button>
       {extraButtons}

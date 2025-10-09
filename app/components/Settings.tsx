@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions, Switch } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, Switch, StatusBar, Platform } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from "../../components/ui/button";
 import { Picker } from '@react-native-picker/picker';
 
@@ -110,8 +111,12 @@ const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabl
   const isLandscape = dims.width > dims.height;
   const s = styles(palette, themeName);
   return (
-    <View style={s.container}>
-      <Text style={s.title}>Settings</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
+      {Platform.OS === 'android' && (
+        <StatusBar backgroundColor={palette.background} barStyle={themeName === 'rocksmith' ? 'light-content' : 'dark-content'} />
+      )}
+      <View style={s.container}>
+        <Text style={s.title}>Settings</Text>
 
       {/* Theme selection */}
       <View style={s.settingRow}>
@@ -147,10 +152,11 @@ const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabl
       </View>
       
       
-      <Button onPress={onBack} style={s.backButton}>
-        <Text style={s.backButtonText}>Back to Menu</Text>
-      </Button>
-    </View>
+        <Button onPress={onBack} style={s.backButton}>
+          <Text style={s.backButtonText}>Back to Menu</Text>
+        </Button>
+      </View>
+    </SafeAreaView>
   )
 }
 
