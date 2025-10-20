@@ -140,6 +140,89 @@ function getScaledStringOffset(stringIndex: number, currentFretboardHeight: numb
   return Math.round(ORIGINAL_STRING_VERTICAL_OFFSETS[stringIndex] * scaleFactor);
 }
 
+// Level configuration for progressive learning
+// Levels 1-7: Low E string (string index 5)
+// Levels 8-14: A string (string index 4)
+// Level 15: E + A combined
+// Levels 16-22: D string (string index 3)
+// Levels 23-29: G string (string index 2)
+// Level 30: D + G combined
+// Levels 31-37: B string (string index 1)
+// Levels 38-44: High E string (string index 0)
+// Level 45: B + High E combined
+// Level 46: Full Fretboard - All 6 strings
+// Level structure: 1/4, 2/4, 1/4+2/4, 3/4, 4/4, 3/4+4/4, full
+function getLevelConfig(level: number): { stringIndices: number[], fretRanges: [number, number][] } {
+  // Low E string (string index 5)
+  if (level === 1) return { stringIndices: [5], fretRanges: [[0, 3]] }; // 1/4 (frets 0-3)
+  if (level === 2) return { stringIndices: [5], fretRanges: [[4, 6]] }; // 2/4 (frets 4-6)
+  if (level === 3) return { stringIndices: [5], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4 (frets 0-6)
+  if (level === 4) return { stringIndices: [5], fretRanges: [[7, 9]] }; // 3/4 (frets 7-9)
+  if (level === 5) return { stringIndices: [5], fretRanges: [[10, 12]] }; // 4/4 (frets 10-12)
+  if (level === 6) return { stringIndices: [5], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4 (frets 7-12)
+  if (level === 7) return { stringIndices: [5], fretRanges: [[0, 12]] }; // Full string (frets 0-12)
+  
+  // A string (string index 4)
+  if (level === 8) return { stringIndices: [4], fretRanges: [[0, 3]] }; // 1/4
+  if (level === 9) return { stringIndices: [4], fretRanges: [[4, 6]] }; // 2/4
+  if (level === 10) return { stringIndices: [4], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4
+  if (level === 11) return { stringIndices: [4], fretRanges: [[7, 9]] }; // 3/4
+  if (level === 12) return { stringIndices: [4], fretRanges: [[10, 12]] }; // 4/4
+  if (level === 13) return { stringIndices: [4], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4
+  if (level === 14) return { stringIndices: [4], fretRanges: [[0, 12]] }; // Full string
+  
+  // E + A combined (string indices 4 and 5)
+  if (level === 15) return { stringIndices: [4, 5], fretRanges: [[0, 12]] }; // Both strings, full fretboard
+  
+  // D string (string index 3)
+  if (level === 16) return { stringIndices: [3], fretRanges: [[0, 3]] }; // 1/4
+  if (level === 17) return { stringIndices: [3], fretRanges: [[4, 6]] }; // 2/4
+  if (level === 18) return { stringIndices: [3], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4
+  if (level === 19) return { stringIndices: [3], fretRanges: [[7, 9]] }; // 3/4
+  if (level === 20) return { stringIndices: [3], fretRanges: [[10, 12]] }; // 4/4
+  if (level === 21) return { stringIndices: [3], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4
+  if (level === 22) return { stringIndices: [3], fretRanges: [[0, 12]] }; // Full string
+  
+  // G string (string index 2)
+  if (level === 23) return { stringIndices: [2], fretRanges: [[0, 3]] }; // 1/4
+  if (level === 24) return { stringIndices: [2], fretRanges: [[4, 6]] }; // 2/4
+  if (level === 25) return { stringIndices: [2], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4
+  if (level === 26) return { stringIndices: [2], fretRanges: [[7, 9]] }; // 3/4
+  if (level === 27) return { stringIndices: [2], fretRanges: [[10, 12]] }; // 4/4
+  if (level === 28) return { stringIndices: [2], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4
+  if (level === 29) return { stringIndices: [2], fretRanges: [[0, 12]] }; // Full string
+  
+  // D + G combined (string indices 2 and 3)
+  if (level === 30) return { stringIndices: [2, 3], fretRanges: [[0, 12]] }; // Both strings, full fretboard
+  
+  // B string (string index 1)
+  if (level === 31) return { stringIndices: [1], fretRanges: [[0, 3]] }; // 1/4
+  if (level === 32) return { stringIndices: [1], fretRanges: [[4, 6]] }; // 2/4
+  if (level === 33) return { stringIndices: [1], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4
+  if (level === 34) return { stringIndices: [1], fretRanges: [[7, 9]] }; // 3/4
+  if (level === 35) return { stringIndices: [1], fretRanges: [[10, 12]] }; // 4/4
+  if (level === 36) return { stringIndices: [1], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4
+  if (level === 37) return { stringIndices: [1], fretRanges: [[0, 12]] }; // Full string
+  
+  // High E string (string index 0)
+  if (level === 38) return { stringIndices: [0], fretRanges: [[0, 3]] }; // 1/4
+  if (level === 39) return { stringIndices: [0], fretRanges: [[4, 6]] }; // 2/4
+  if (level === 40) return { stringIndices: [0], fretRanges: [[0, 3], [4, 6]] }; // 1/4 + 2/4
+  if (level === 41) return { stringIndices: [0], fretRanges: [[7, 9]] }; // 3/4
+  if (level === 42) return { stringIndices: [0], fretRanges: [[10, 12]] }; // 4/4
+  if (level === 43) return { stringIndices: [0], fretRanges: [[7, 9], [10, 12]] }; // 3/4 + 4/4
+  if (level === 44) return { stringIndices: [0], fretRanges: [[0, 12]] }; // Full string
+  
+  // B + High E combined (string indices 0 and 1)
+  if (level === 45) return { stringIndices: [0, 1], fretRanges: [[0, 12]] }; // Both strings, full fretboard
+  
+  // Full Fretboard - All 6 strings
+  if (level === 46) return { stringIndices: [0, 1, 2, 3, 4, 5], fretRanges: [[0, 12]] }; // All strings, full fretboard
+  
+  // Default fallback - full Low E string
+  return { stringIndices: [5], fretRanges: [[0, 12]] };
+}
+
 // Original random dot generator, with optional manual position
 function GenDotList(
   fretboardHeight: number,
@@ -156,7 +239,6 @@ function GenDotList(
   }
 
   const noteStepx = 29;
-  const numberOfPositions = [6,12,18,24,30,36,42,48,54,60,66,72,78];
   const FirstNoteX = 10;
   const DOT_SIZE = 16;
 
@@ -165,10 +247,22 @@ function GenDotList(
   const usableHeight = (1 - 2 * marginPercent) * fretboardHeight;
   const gapCount = numStrings + 1;
 
-  const listOfPositions = Array.from({ length: numberOfPositions[difficulty] }, (_, index) => index);
-  const dotCoordinates = listOfPositions.map((position) => {
-    const fretIndex = Math.floor(position / numStrings)
-    const stringIndex = position % numStrings
+  // Get level-specific configuration
+  const levelConfig = getLevelConfig(difficulty + 1); // difficulty is 0-indexed, levels are 1-indexed
+  
+  // Build list of valid positions based on level configuration
+  const listOfPositions: { stringIndex: number; fretIndex: number }[] = [];
+  for (const stringIndex of levelConfig.stringIndices) {
+    for (const [minFret, maxFret] of levelConfig.fretRanges) {
+      for (let fret = minFret; fret <= maxFret; fret++) {
+        listOfPositions.push({ stringIndex, fretIndex: fret });
+      }
+    }
+  }
+
+  const dotCoordinates = listOfPositions.map((pos) => {
+    const fretIndex = pos.fretIndex;
+    const stringIndex = pos.stringIndex;
     // stringIndex 0 (High E) is at the top, stringIndex 5 (Low E) is at the bottom.
     // This matches the visual rendering in Strings.tsx and the order of ORIGINAL_STRING_VERTICAL_OFFSETS.
     

@@ -8,6 +8,7 @@ interface MenuProps {
   onCampaign: () => void;
   onFreeMode: () => void;
   onSettings: () => void;
+  onReference: () => void;
   extraButtons?: React.ReactNode;
 }
 
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraButtons }) => {
+const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, onReference, extraButtons }) => {
   const { themeName, palette } = React.useContext(ThemeContext);
   
   
@@ -37,12 +38,12 @@ const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraBu
       <View style={{ alignItems: 'center', marginBottom: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{
-            width: 44, height: 44, borderRadius: 22,
+            width: 44, height: 44, borderRadius: 8,
             alignItems: 'center', justifyContent: 'center',
-            backgroundColor: palette.card,
+            backgroundColor: palette.primary,
             borderWidth: 2, borderColor: palette.primary,
           }}>
-            <MaterialCommunityIcons name="guitar-pick" size={22} color={palette.primary} />
+            <MaterialCommunityIcons name="guitar-electric" size={38} color={palette.card} />
           </View>
           <Text style={{
             color: palette.primary,
@@ -65,6 +66,9 @@ const Menu: React.FC<MenuProps> = ({ onCampaign, onFreeMode, onSettings, extraBu
       </Button>
       <Button onPress={onFreeMode} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.text : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.text : palette.buttonText }]}>Free Mode</Text>
+      </Button>
+      <Button onPress={onReference} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.text : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0 }]}>
+        <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.text : palette.buttonText }]}>Reference</Text>
       </Button>
       <Button onPress={onSettings} style={[styles.button, { backgroundColor: palette.button, borderColor: themeName === 'rocksmith' ? palette.primary : 'transparent', borderWidth: themeName === 'rocksmith' ? 1 : 0, marginBottom: 0 }]}>
         <Text style={[styles.buttonText, { color: themeName === 'rocksmith' ? palette.primary : palette.buttonText }]}>Settings</Text>

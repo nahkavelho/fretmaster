@@ -11,8 +11,63 @@ interface CampaignProps {
   bestScores: Record<string, number>
 }
 
-const LEVEL_COUNT = 36;
-const QUESTS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ id: i + 1, name: `Level ${i + 1}` }));
+const LEVEL_COUNT = 46;
+
+// Level descriptions for the new progressive system
+const LEVEL_DESCRIPTIONS: Record<number, string> = {
+  1: 'Low E String: Part 1 (Frets 0-3)',
+  2: 'Low E String: Part 2 (Frets 4-6)',
+  3: 'Low E String: Parts 1-2 (Frets 0-6)',
+  4: 'Low E String: Part 3 (Frets 7-9)',
+  5: 'Low E String: Part 4 (Frets 10-12)',
+  6: 'Low E String: Parts 3-4 (Frets 7-12)',
+  7: 'Low E String: Complete (Frets 0-12)',
+  8: 'A String: Part 1 (Frets 0-3)',
+  9: 'A String: Part 2 (Frets 4-6)',
+  10: 'A String: Parts 1-2 (Frets 0-6)',
+  11: 'A String: Part 3 (Frets 7-9)',
+  12: 'A String: Part 4 (Frets 10-12)',
+  13: 'A String: Parts 3-4 (Frets 7-12)',
+  14: 'A String: Complete (Frets 0-12)',
+  15: 'E + A Strings: Combined',
+  16: 'D String: Part 1 (Frets 0-3)',
+  17: 'D String: Part 2 (Frets 4-6)',
+  18: 'D String: Parts 1-2 (Frets 0-6)',
+  19: 'D String: Part 3 (Frets 7-9)',
+  20: 'D String: Part 4 (Frets 10-12)',
+  21: 'D String: Parts 3-4 (Frets 7-12)',
+  22: 'D String: Complete (Frets 0-12)',
+  23: 'G String: Part 1 (Frets 0-3)',
+  24: 'G String: Part 2 (Frets 4-6)',
+  25: 'G String: Parts 1-2 (Frets 0-6)',
+  26: 'G String: Part 3 (Frets 7-9)',
+  27: 'G String: Part 4 (Frets 10-12)',
+  28: 'G String: Parts 3-4 (Frets 7-12)',
+  29: 'G String: Complete (Frets 0-12)',
+  30: 'D + G Strings: Combined',
+  31: 'B String: Part 1 (Frets 0-3)',
+  32: 'B String: Part 2 (Frets 4-6)',
+  33: 'B String: Parts 1-2 (Frets 0-6)',
+  34: 'B String: Part 3 (Frets 7-9)',
+  35: 'B String: Part 4 (Frets 10-12)',
+  36: 'B String: Parts 3-4 (Frets 7-12)',
+  37: 'B String: Complete (Frets 0-12)',
+  38: 'High E String: Part 1 (Frets 0-3)',
+  39: 'High E String: Part 2 (Frets 4-6)',
+  40: 'High E String: Parts 1-2 (Frets 0-6)',
+  41: 'High E String: Part 3 (Frets 7-9)',
+  42: 'High E String: Part 4 (Frets 10-12)',
+  43: 'High E String: Parts 3-4 (Frets 7-12)',
+  44: 'High E String: Complete (Frets 0-12)',
+  45: 'B + High E Strings: Combined',
+  46: 'Master Level: All Strings',
+};
+
+const QUESTS = Array.from({ length: LEVEL_COUNT }, (_, i) => ({ 
+  id: i + 1, 
+  name: `Level ${i + 1}`,
+  description: LEVEL_DESCRIPTIONS[i + 1] || ''
+}));
 
 const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.create({
   container: {
@@ -162,11 +217,33 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
 
   const { themeName, palette } = React.useContext(ThemeContext);
   const styles = getStyles(themeName, palette); // Call getStyles
+  // Smooth gradient color scheme across all levels (theme-aware)
   const getLevelColor = React.useCallback((level: number) => {
-    if (level >= 1 && level <= 12) return '#2ecc40'; // Green - Beginner
-    if (level >= 13 && level <= 24) return '#FFC107'; // Yellow - Intermediate
-    return '#FF5555'; // Red - Advanced (25–36)
-  }, []);
+    // Acoustic theme: Vibrant warm tones (wood, bronze, amber, copper, terracotta)
+    const acousticColors = [
+      '#A67C1B', '#B8861F', '#CA9023', '#DC9A27', '#E6A82E', '#F0B636', '#F5C03E',
+      '#EFAA46', '#E9944E', '#E37E56', '#DD685E', '#D75F66', '#D1566E', '#CB4D76',
+      '#C0527E', '#B55786', '#AA5C8E', '#A46496', '#9E6C9E', '#9874A6', '#927CAE',
+      '#8C84B6', '#8690BE', '#8098C6', '#7AA0CE', '#74A8D6', '#6EB0DE', '#68B8E6',
+      '#6BBFD4', '#6EC6C2', '#71CDB0', '#74D49E', '#79D588', '#7ED672', '#83D75C',
+      '#8CD854', '#95D94C', '#9EDA44', '#A7DB3C', '#B0DC34', '#B9DD2C', '#C2DE24',
+      '#CADA38', '#D2D64C', '#DAD260', '#E2CE74', '#EDD899'
+    ];
+    
+    // Rocksmith theme: Cool muted gradient (original)
+    const rocksmithColors = [
+      '#5ba35b', '#65a85f', '#6fad63', '#79b267', '#83b76b', '#8dbc6f', '#97c173',
+      '#a1c677', '#abcb7b', '#b5c87f', '#bfc583', '#c9c287', '#d3bf8b', '#d3b88f',
+      '#d3b193', '#d3aa97', '#d3a39b', '#d39c9f', '#cd95a3', '#c78ea7', '#c187ab',
+      '#bb80af', '#b579b3', '#af7bb7', '#a97dbb', '#a37fbf', '#9d81c3', '#9783c7',
+      '#9185cb', '#8b87cf', '#858acd', '#7f8dcb', '#7990c9', '#7393c7', '#6d96c5',
+      '#6799c3', '#619cc1', '#5b9fbf', '#5fa2bd', '#63a5bb', '#67a8b9', '#6babb7',
+      '#6faeb5', '#73b1b3', '#77b4b1', '#c9b775'
+    ];
+    
+    const colors = themeName === 'acoustic' ? acousticColors : rocksmithColors;
+    return colors[level - 1] || colors[0];
+  }, [themeName]);
 
   // Section headers are inserted at 1, 13, 25 in the render below.
 
@@ -177,7 +254,7 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
         {QUESTS.map((quest) => {
           const locked = quest.id > unlockedLevel;
           const levelColor = getLevelColor(quest.id);
-          const headerLabel = quest.id === 1 ? 'Beginner' : quest.id === 13 ? 'Intermediate' : quest.id === 25 ? 'Hard' : null;
+          const headerLabel = quest.id === 1 ? 'Low E String' : quest.id === 8 ? 'A String' : quest.id === 15 ? 'E + A Combined' : quest.id === 16 ? 'D String' : quest.id === 23 ? 'G String' : quest.id === 30 ? 'D + G Combined' : quest.id === 31 ? 'B String' : quest.id === 38 ? 'High E String' : quest.id === 45 ? 'B + High E Combined' : quest.id === 46 ? 'Master Level' : null;
           return (
             <React.Fragment key={quest.id}>
               {headerLabel && (
@@ -199,22 +276,18 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
                   ]}
                 >
                   <View style={styles.levelRowInner}>
-                    <View style={[styles.iconContainer, { borderColor: levelColor }]}>
-                      {quest.id >= 25 ? (
-                        <MaterialCommunityIcons name="guitar-pick" size={34} color={levelColor} />
-                      ) : quest.id >= 13 ? (
-                        <MaterialCommunityIcons name="guitar-electric" size={34} color={levelColor} />
-                      ) : (
-                        <FontAwesome5 name="guitar" size={30} color={levelColor} />
-                      )}
+                    <View style={[styles.iconContainer, { borderColor: levelColor, backgroundColor: palette.modalBackground }]}>
+                      <Text style={{ fontSize: (quest.id === 15 || quest.id === 30 || quest.id === 45 || quest.id === 46) ? 18 : 32, fontWeight: 'bold', color: levelColor }}>
+                        {quest.id === 46 ? 'ALL' : quest.id === 45 ? 'B+e' : quest.id >= 38 ? 'e' : quest.id >= 31 ? 'B' : quest.id === 30 ? 'D+G' : quest.id >= 23 ? 'G' : quest.id >= 16 ? 'D' : quest.id === 15 ? 'E+A' : quest.id >= 8 ? 'A' : 'E'}
+                      </Text>
                     </View>
                     <View style={styles.titleBlock}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' as const }}>
                         <Text style={[styles.questText, { color: levelColor }]}>{quest.name}</Text>
-                        {quest.id >= 25 && (
-                          <MaterialCommunityIcons name="fire" size={16} color={levelColor} style={{ marginLeft: 6 }} />
-                        )}
                       </View>
+                      <Text style={[styles.metaText, { fontSize: 12, marginTop: 2 }]}>
+                        {quest.description}
+                      </Text>
                       <Text style={styles.metaText}>
                         {typeof bestScores[String(quest.id)] === 'number' ? `Best: ${bestScores[String(quest.id)]}/30` : locked ? 'Locked' : 'No score yet'}
                       </Text>

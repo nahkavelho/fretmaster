@@ -10,3 +10,4 @@ export const getLevelScores: (userId: string) => Promise<Record<string, number>>
 export const getUserStats: (userId: string) => Promise<{ totalTimeSeconds: number; bestStreak: number; recentSessions: Array<{ ts: number; mode: 'campaign'|'free'; level?: number|null; score: number; durationSec: number; streak: number }> }>;
 export const saveSessionStats: (userId: string, payload: { mode: 'campaign'|'free'; level?: number|null; score: number; durationSec: number; streak: number }) => Promise<void>;
 export const resetProgress: (userId: string) => Promise<void>;
+export const unlockAllLevels: (userId: string) => Promise<number | undefined>;

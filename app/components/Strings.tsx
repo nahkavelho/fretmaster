@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { ROCKSMITH_STRING_COLORS } from '../_layout';
+import { ThemeName, ThemePalette } from '../ThemeContext';
 
 interface StringsProps {
   strings: number[];
@@ -8,11 +8,20 @@ interface StringsProps {
   themeName: ThemeName;
   stringColors: string[];
   palette: ThemePalette; // Added palette
+  useColoredStrings?: boolean; // Option to use colored strings
 }
 
-import { ThemeName, ThemePalette } from '../_layout'; // Added ThemePalette
+// Steel-like string colors (realistic metallic tones with better contrast)
+const STEEL_STRING_COLORS = [
+  '#6B6B6B', // Low E - Dark steel gray (thickest string)
+  '#7A7A7A', // A - Medium dark steel
+  '#8A8A8A', // D - Medium steel
+  '#9B9B9B', // G - Medium light steel
+  '#ABABAB', // B - Light steel
+  '#BCBCBC', // High E - Lightest steel (thinnest string)
+];
 
-const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, themeName, stringColors, palette }) => { // Added palette
+const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, themeName, stringColors, palette, useColoredStrings = false }) => { // Added useColoredStrings
   return (
     <>
       {strings.map((string: number, i: number) => {
@@ -27,7 +36,8 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, themeName, 
         const renderedIndex = (strings.length - 1) - i;
         const gapCount = strings.length + 1;
         const top = (marginPercent * fretboardHeight) + ((renderedIndex + 1) / gapCount) * usableHeight - stringHeight / 2;
-        const stringColor = stringColors[i % stringColors.length];
+        // Use steel colors by default, or themed colors if option is enabled
+        const stringColor = useColoredStrings ? stringColors[i % stringColors.length] : STEEL_STRING_COLORS[i];
         return (
           <View
             key={i}
@@ -38,11 +48,14 @@ const Strings: React.FC<StringsProps> = ({ strings, fretboardHeight, themeName, 
               top,
               height: stringHeight,
               backgroundColor: stringColor,
-              shadowColor: palette.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.4,
-              shadowRadius: 2,
-              elevation: 2,
+              shadowColor: useColoredStrings ? palette.shadow : '#000000',
+              shadowOffset: { width: 0, height: stringHeight > 3 ? 2 : 1 },
+              shadowOpacity: useColoredStrings ? 0.4 : 0.6,
+              shadowRadius: useColoredStrings ? 2 : 3,
+              elevation: useColoredStrings ? 2 : 3,
+              // Add subtle top border to simulate steel shine/highlight
+              borderTopWidth: useColoredStrings ? 0 : (stringHeight > 2 ? 0.5 : 0),
+              borderTopColor: useColoredStrings ? 'transparent' : 'rgba(255, 255, 255, 0.3)',
             }}
           />
         );

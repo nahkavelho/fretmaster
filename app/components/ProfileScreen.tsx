@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { User as FirebaseUser, Auth, signOut } from 'firebase/auth';
 import Button from '../../components/ui/button'; // Adjusted path
 import { ThemeName, ThemePalette } from '../ThemeContext'; // Adjusted path
+import { unlockAllLevels } from '../../firebase';
 
 interface ProfileScreenProps {
   themeName: ThemeName;
@@ -17,6 +18,7 @@ interface ProfileScreenProps {
   unlockedLevel: number;
   userStats: { totalTimeSeconds: number; bestStreak: number; recentSessions: Array<{ ts: number; mode: 'campaign'|'free'; level?: number|null; score: number; durationSec: number; streak: number }> };
   onResetProgress: () => Promise<void>;
+  setUnlockedLevel: (level: number) => void;
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -31,6 +33,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
   unlockedLevel,
   userStats,
   onResetProgress,
+  setUnlockedLevel,
 }) => {
   const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
@@ -189,6 +192,24 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
           }}
         >
           <Text style={themeName === 'rocksmith' ? styles.menuButtonText : { color: "#F8F4E1", fontWeight: "bold", fontSize: 18 }}>Logout</Text>
+        </Button>
+
+        {/* Unlock All Levels (Testing) */}
+        <Button
+          style={themeName === 'rocksmith' ?
+            [styles.menuButton, { width: 200, marginTop: 8, marginBottom: 8, marginLeft:0, marginRight:0, alignSelf: 'auto' }]
+            :
+            { backgroundColor: "#2ecc40", padding: 14, borderRadius: 12, width: 200, marginTop: 12, shadowColor: '#2ecc40', shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 }
+          }
+          onPress={async () => {
+            if (user?.uid) {
+              await unlockAllLevels(user.uid);
+              setUnlockedLevel(46);
+              Alert.alert('Success', 'All 46 levels unlocked!');
+            }
+          }}
+        >
+          <Text style={{ color: '#F8F4E1', fontWeight: 'bold', fontSize: 16 }}>Unlock All Levels</Text>
         </Button>
 
         {/* Reset Progress */}

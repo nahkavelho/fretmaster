@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NAV_THEME } from '../lib/constants';
 
 // ThemeName type definition
-export type ThemeName = 'rocksmith' | 'sunsetGlow' | 'oceanDeep';
+export type ThemeName = 'rocksmith' | 'acoustic';
 
 // ThemePalette interface definition
 export interface ThemePalette {
@@ -31,24 +31,23 @@ export interface ThemePalette {
   shadow: string;
 }
 
-// String color definitions
+// String color definitions (muted for easier viewing)
 export const ROCKSMITH_STRING_COLORS = [
-  '#FF4B4B', // E (6th, low)
-  '#FFD900', // A (5th)
-  '#00A2FF', // D (4th)
-  '#FF9900', // G (3rd)
-  '#00E676', // B (2nd)
-  '#C74BFF', // E (1st, high)
+  '#CC6666', // E (6th, low) - Muted red
+  '#D9C266', // A (5th) - Muted gold
+  '#6699CC', // D (4th) - Muted blue
+  '#CC9966', // G (3rd) - Muted orange
+  '#66CC99', // B (2nd) - Muted teal
+  '#B366CC', // E (1st, high) - Muted purple
 ];
-export const SUNSET_GLOW_STRING_COLORS = ['#FF6B6B', '#FF9F43', '#FFD166', '#F7B7A3', '#A0E7E5', '#EF476F']; // Low E to High E
 
-export const OCEAN_DEEP_STRING_COLORS = [
-  '#00796B', // Low E (6th) - Deep Teal
-  '#1976D2', // A (5th) - Medium Blue
-  '#4DB6AC', // D (4th) - Lighter Teal
-  '#FFF59D', // G (3rd) - Sandy Beige/Light Gold
-  '#4DD0E1', // B (2nd) - Aqua Blue
-  '#FFAB91', // High E (1st) - Light Coral/Pink
+export const ACOUSTIC_STRING_COLORS = [
+  '#D4A574', // E (6th, low) - Bronze/Gold (wound string)
+  '#C9985A', // A (5th) - Darker Bronze
+  '#BF8B40', // D (4th) - Deep Bronze
+  '#E8D5B7', // G (3rd) - Light Bronze
+  '#F5E6D3', // B (2nd) - Pale Steel
+  '#FEFAF2', // E (1st, high) - Bright Steel
 ];
 
 // THEME_PALETTES definition using NAV_THEME from ../lib/constants
@@ -62,9 +61,9 @@ export const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     button: '#404040', // Darker button background
     buttonText: '#FFF',
     modalBackground: '#232526',
-    fretboardBackground: '#181A1B',
-    fretboardBorder: '#444',
-    fretboardNut: '#303030',
+    fretboardBackground: '#5D4037', // Dark wood brown (ebony/rosewood)
+    fretboardBorder: '#3E2723', // Darker wood border
+    fretboardNut: '#E8E8E8', // Light bone/ivory nut
     noteDotOpen: '#FF0000',
     noteDotOpenBorder: '#B71C1C',
     noteDotFretted: '#FFFF00',
@@ -80,55 +79,30 @@ export const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     icon: '#FFD900',
     shadow: '#000000',
   },
-  sunsetGlow: {
-    background: '#FFF8E1',
-    text: '#5D4037',
-    textSecondary: '#8D6E63',
-    button: '#FF7043',
+  acoustic: {
+    background: '#F5E6D3', // Warm cream/beige (like spruce top)
+    text: '#3E2723', // Dark brown
+    textSecondary: '#5D4037', // Medium brown
+    button: '#8D6E63', // Wood brown
     buttonText: '#FFFFFF',
-    modalBackground: '#FFFDE7',
-    fretboardBackground: '#A0522D', // Sienna (Wooden color)
-    fretboardBorder: '#A1887F',
-    fretboardNut: '#A1887F',
-    noteDotOpen: '#FF5252', // Reddish for open strings
-    noteDotOpenBorder: '#FFFFFF', // White border for open strings
-    noteDotFretted: '#4CAF50', // Vibrant Green for fretted notes
-    noteDotFrettedBorder: '#FFFFFF', // White border for fretted notes
-    stringColors: SUNSET_GLOW_STRING_COLORS,
-    fretboardInlayDot: '#FFF8E1', // Pale Yellow Cream
-    noteButtonBackground: '#FF8A65', // Light Coral for Sunset Glow buttons
-    noteButtonBorderColor: '#FFAB91', // Lighter Coral border
-    noteButtonText: '#FFFFFF',      // White text
-    card: '#FFFDE7',
-    primary: '#FF7043',
-    notification: '#FF5252',
-    icon: '#FF7043',
-    shadow: '#BF360C',
-  },
-  oceanDeep: {
-    background: '#004D40',
-    text: '#E0F7FA',
-    textSecondary: '#B2EBF2',
-    button: '#0288D1',
-    buttonText: '#FFFFFF',
-    modalBackground: '#006064',
-    fretboardBackground: '#263238',
-    fretboardBorder: '#455A64',
-    fretboardNut: '#546E7A',
-    noteDotOpen: '#FF8A65',
-    noteDotOpenBorder: '#FFFFFF',
-    noteDotFretted: '#69F0AE',
-    noteDotFrettedBorder: '#FFFFFF',
-    stringColors: OCEAN_DEEP_STRING_COLORS,
-    fretboardInlayDot: '#B2EBF2', // Light Cyan
-    noteButtonBackground: '#01579B',
-    noteButtonBorderColor: '#0277BD',
-    noteButtonText: '#E1F5FE',
-    card: '#006064',
-    primary: '#4FC3F7',
-    notification: '#FFD180',
-    icon: '#4FC3F7',
-    shadow: '#000000',
+    modalBackground: '#FFF8E7', // Light wood color
+    fretboardBackground: '#6D4C41', // Rosewood brown
+    fretboardBorder: '#4E342E', // Dark rosewood
+    fretboardNut: '#F5F5DC', // Bone white
+    noteDotOpen: '#FF6B35', // Warm orange (for open strings)
+    noteDotOpenBorder: '#8B4513', // Saddle brown border
+    noteDotFretted: '#D4A574', // Bronze/gold (like acoustic strings)
+    noteDotFrettedBorder: '#8B6914', // Dark gold border
+    stringColors: ACOUSTIC_STRING_COLORS,
+    fretboardInlayDot: '#FFFAF0', // Pearl white (mother of pearl inlays)
+    noteButtonBackground: '#A1887F', // Light wood
+    noteButtonBorderColor: '#6D4C41', // Dark wood border
+    noteButtonText: '#3E2723', // Dark brown text
+    card: '#FFF8E7',
+    primary: '#D4A574', // Bronze/gold
+    notification: '#FF6B35', // Warm orange
+    icon: '#8D6E63',
+    shadow: '#3E2723',
   }
 };
 

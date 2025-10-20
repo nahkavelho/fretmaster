@@ -21,6 +21,7 @@ import AnimatedFeedback from './components/AnimatedFeedback';
 import MenuScreen from './components/MenuScreen';
 import ProfileScreen from './components/ProfileScreen';
 import GameScreen from './components/GameScreen';
+import FretboardReference from './components/FretboardReference';
 
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 const strings = [1, 2, 3, 4, 5, 6]
@@ -132,7 +133,7 @@ export function FretboarderAppScreen() {
   const [noteDot, setNoteDot] = React.useState<NoteDot>(
     manualMode 
       ? ManualDotPositionFunction(fretboardHeight, strings.length, manualString, manualFret, verticalOffset, horizontalOffset)
-      : GenDotList(fretboardHeight, strings.length, difficulty)
+      : GenDotList(fretboardHeight, strings.length, 0) // Always start with difficulty 0 (level 1) for initial state
   );
   const lastCorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const lastIncorrectTimeout = React.useRef<NodeJS.Timeout | null>(null);
@@ -142,7 +143,10 @@ export function FretboarderAppScreen() {
   const [freeModeTimeSeconds, setFreeModeTimeSeconds] = React.useState<number | null>(null)
   const [soundEnabled, setSoundEnabled] = React.useState<boolean>(true)
   const [hapticsEnabled, setHapticsEnabled] = React.useState<boolean>(true)
+  const [useColoredStrings, setUseColoredStrings] = React.useState<boolean>(false) // Steel strings by default
   const [userStats, setUserStats] = React.useState<{ totalTimeSeconds: number; bestStreak: number; recentSessions: any[] }>({ totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] })
+  const resultClearTimeout = React.useRef<NodeJS.Timeout | null>(null)
+  const latestResultMessageRef = React.useRef<string | null>(null)
   const setLevel = (level: number) => {
     setDifficulty(level - 1);
     setScreen('free');
@@ -151,21 +155,28 @@ export function FretboarderAppScreen() {
     setSelectedLevel(level)
   }
 
+  // Effect to set fretboard height when entering game screen
   React.useEffect(() => {
     if (currentScreen === 'free') {
-      console.log(`Resetting game for 'free' screen. Campaign Mode: ${campaignMode}, Selected Level: ${selectedLevel}, Difficulty: ${difficulty}`);
-      // Ensure responsive height when entering the game screen
-      setFretboardHeight(calcFretboardHeight('free'));
+      const newFretboardHeight = calcFretboardHeight('free');
+      setFretboardHeight(newFretboardHeight);
+    }
+  }, [currentScreen, calcFretboardHeight]);
+
+  // Effect to reset game state when entering free mode or when level/difficulty changes
+  React.useEffect(() => {
+    if (currentScreen === 'free') {
+      console.log(`Resetting game for 'free' screen. Campaign Mode: ${campaignMode}, Selected Level: ${selectedLevel}, Difficulty: ${difficulty}, Fretboard Height: ${fretboardHeight}`);
       setScore(0);
       setNumberOfPositions(30);
       const currentDifficulty = campaignMode ? selectedLevel - 1 : difficulty;
-      setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficulty < 0 ? 0 : currentDifficulty)); // Ensure difficulty isn't negative
+      setNoteDot(GenDotList(fretboardHeight, strings.length, currentDifficulty < 0 ? 0 : currentDifficulty));
       setNoteQueue([]);
       setLastCorrectNote(null);
       setLastIncorrectNote(null);
       setResultMessage(null);
     }
-  }, [currentScreen, campaignMode, selectedLevel, difficulty, calcFretboardHeight, fretboardHeight]);
+  }, [currentScreen, campaignMode, selectedLevel, difficulty, fretboardHeight, strings.length]);
 
   // Update fretboard height on dimension changes to fit different phones
   React.useEffect(() => {
@@ -182,14 +193,34 @@ export function FretboarderAppScreen() {
   }, [currentScreen, calcFretboardHeight]);
 
   const ManageResultMessage = (message: string) => {
+    // Cancel any pending result clear to avoid wiping a newer message (e.g., streak) prematurely
+    if (resultClearTimeout.current) {
+      clearTimeout(resultClearTimeout.current)
+      resultClearTimeout.current = null
+    }
+
+    const incomingIsQuick = (message === '✅' || message === '❌')
+    const currentIsQuick = (latestResultMessageRef.current === '✅' || latestResultMessageRef.current === '❌')
+
+    // If a non-quick (e.g., streak) message is currently visible, ignore quick updates to avoid cutting it short
+    if (!currentIsQuick && latestResultMessageRef.current) {
+      if (incomingIsQuick) {
+        return; // keep showing the longer message
+      }
+    }
+
     setResultMessage(message)
-    if (message === '✅') {
-      lastCorrectTimeout.current = setTimeout(() => {
-        setResultMessage(null)
-      }, 380)
-    } else if (message === '❌') {
-      lastIncorrectTimeout.current = setTimeout(() => {
-        setResultMessage(null)
+    latestResultMessageRef.current = message
+
+    // Only auto-clear quick emoji messages. Streak/text messages are faded by AnimatedFeedback.
+    if (incomingIsQuick) {
+      resultClearTimeout.current = setTimeout(() => {
+        // Only clear if the current message is still a quick one.
+        if (latestResultMessageRef.current === '✅' || latestResultMessageRef.current === '❌') {
+          setResultMessage(null)
+          latestResultMessageRef.current = null
+        }
+        resultClearTimeout.current = null
       }, 380)
     }
   }
@@ -249,6 +280,16 @@ const NOTE_NAMES = (
         setSoundEnabled={setSoundEnabled}
         hapticsEnabled={hapticsEnabled}
         setHapticsEnabled={setHapticsEnabled}
+        useColoredStrings={useColoredStrings}
+        setUseColoredStrings={setUseColoredStrings}
+      />
+    )
+  }
+
+  if (currentScreen === 'reference') {
+    return (
+      <FretboardReference
+        onBack={() => setScreen('menu')}
       />
     )
   }
@@ -314,6 +355,7 @@ const NOTE_NAMES = (
         bestScores={bestScores}
         setBestScores={setBestScores}
         freeModeTimeSeconds={freeModeTimeSeconds}
+        useColoredStrings={useColoredStrings}
       />
     );
   }
@@ -340,6 +382,7 @@ const NOTE_NAMES = (
         bestScores={bestScores}
         unlockedLevel={unlockedLevel}
         userStats={userStats}
+        setUnlockedLevel={setUnlockedLevel}
         onResetProgress={async () => {
           if (!user) return;
           try {
