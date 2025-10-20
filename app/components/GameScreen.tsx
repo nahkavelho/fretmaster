@@ -70,6 +70,7 @@ interface GameScreenProps {
   setBestScores: (updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
   // UI_SIZES is imported directly
   freeModeTimeSeconds: number | null;
+  useColoredStrings: boolean;
 }
 
 const GameScreen: React.FC<GameScreenProps> = ({
@@ -130,6 +131,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
   bestScores,
   setBestScores,
   freeModeTimeSeconds,
+  useColoredStrings,
 }) => {
   const { width, height } = Dimensions.get('window');
   const shortDim = Math.min(width, height);
@@ -158,12 +160,20 @@ const GameScreen: React.FC<GameScreenProps> = ({
   const [sessionStartedAt, setSessionStartedAt] = React.useState<number | null>(null);
   const [timeLeft, setTimeLeft] = React.useState<number | null>(null);
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [hintUsed, setHintUsed] = React.useState(false); // Track if hint was used for current note
 
   const getTimePerGuess = React.useCallback(() => {
     if (!campaignMode) return freeModeTimeSeconds; // Use selected time in Free Mode (null = no timer)
-    if (selectedLevel >= 1 && selectedLevel <= 12) return 8; // Beginner
-    if (selectedLevel >= 13 && selectedLevel <= 24) return 5; // Intermediate
-    if (selectedLevel >= 25 && selectedLevel <= 36) return 3; // Advanced
+    if (selectedLevel >= 1 && selectedLevel <= 7) return 8; // Low E String
+    if (selectedLevel >= 8 && selectedLevel <= 14) return 7; // A String
+    if (selectedLevel === 15) return 6; // E + A Combined
+    if (selectedLevel >= 16 && selectedLevel <= 22) return 7; // D String
+    if (selectedLevel >= 23 && selectedLevel <= 29) return 6; // G String
+    if (selectedLevel === 30) return 5; // D + G Combined
+    if (selectedLevel >= 31 && selectedLevel <= 37) return 6; // B String
+    if (selectedLevel >= 38 && selectedLevel <= 44) return 5; // High E String
+    if (selectedLevel === 45) return 4; // B + High E Combined
+    if (selectedLevel === 46) return 3; // Full Fretboard - Master Level (fastest!)
     return 8; // Default safety
   }, [campaignMode, selectedLevel, freeModeTimeSeconds]);
 
@@ -208,6 +218,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
           setNumberOfPositions(Math.max(0, numberOfPositions - 1));
           setNoteDot(generated);
           setCombo(0);
+          setHintUsed(false); // Reset hint when time runs out
         })();
       } else {
         setTimeLeft(remaining);
@@ -283,7 +294,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         if (score >= 27) {
           playLevelEndSound(true);
           ManageResultMessage("🎉 Level Passed! 🎉");
-          if (campaignMode && user && selectedLevel === unlockedLevel) {
+          if (campaignMode && user && selectedLevel === unlockedLevel && unlockedLevel < 46) {
             const newUnlockedLevel = unlockedLevel + 1;
             setUnlockedLevel(newUnlockedLevel);
             if (user.uid) { // Ensure user.uid is available
@@ -387,7 +398,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
     }
     else if (score >= 20) performanceMsg = 'Good job! Keep practicing to improve.';
     else performanceMsg = 'Keep practicing! You can do it!';
-    if (campaignMode && score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 36) {
+    if (campaignMode && score >= 27 && selectedLevel === unlockedLevel && unlockedLevel < 46) {
       const newUnlockedLevel = unlockedLevel + 1;
       setUnlockedLevel(newUnlockedLevel);
       if (user) {
@@ -434,7 +445,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
               <Text style={{ fontSize: 32, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 10 }}>Game Over</Text>
               <Text style={{ fontSize: 26, fontWeight: 'bold', color: themeName === 'rocksmith' ? '#FFD900' : '#2ecc40', marginBottom: 10 }}>Score: {score} / 30</Text>
               <Text style={{ fontSize: 18, color: themeName === 'rocksmith' ? '#FFD900' : '#543310', marginBottom: 20, textAlign: 'center' as const }}>{performanceMsg}</Text>
-              {score >= 27 && selectedLevel < 36 && (
+              {score >= 27 && selectedLevel < 46 && (
                 <Button
                   style={[
                     {
@@ -449,7 +460,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     },
                   ]}
                   onPress={() => {
-                    if (selectedLevel < 36) {
+                    if (selectedLevel < 46) {
                       setSelectedLevel(selectedLevel + 1);
                     }
                   }}
@@ -485,6 +496,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastIncorrectNote(null);
                   setResultMessage(null);
                   setLevelEndSoundPlayed(false); // Reset flag for new game
+                  setHintUsed(false); // Reset hint
                 }}
               >
                 <Text style={{
@@ -512,6 +524,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setNumberOfPositions(30);
                   setLevelEndSoundPlayed(false); // Reset flag when going back to menu
                   setCombo(0);
+                  setHintUsed(false);
                 }}
               >
                 <Text style={{
@@ -568,6 +581,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                   setLastIncorrectNote(null);
                   setResultMessage(null);
                   setCombo(0);
+                  setHintUsed(false);
                 }}
               >
                 <Text style={{ color: palette.buttonText, fontWeight: 'bold' }}>Reset</Text>
@@ -603,6 +617,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
         <View style={{ alignItems: 'center' as const, position: 'absolute', top: 8, left: 0, right: 0, zIndex: 9 }}>
           <View style={{
             flexDirection: 'row' as const,
+            justifyContent: 'space-around' as const,
             alignItems: 'center' as const,
             gap: 8,
             backgroundColor: themeName === 'rocksmith' ? '#1b1d1e' : palette.card,
@@ -613,6 +628,26 @@ const GameScreen: React.FC<GameScreenProps> = ({
             borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
             shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
           }}>
+            {/* Hint Button */}
+            <Button
+              style={{
+                paddingVertical: 6,
+                paddingHorizontal: 10,
+                borderRadius: 10,
+                backgroundColor: hintUsed ? (themeName === 'rocksmith' ? '#555' : '#CCC') : (themeName === 'rocksmith' ? '#232526' : '#FFE5B4'),
+                borderWidth: themeName === 'rocksmith' ? 0.5 : 1,
+                borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder,
+              }}
+              onPress={() => {
+                if (!hintUsed && noteDot) {
+                  setHintUsed(true);
+                  setCombo(0); // Reset streak when hint is used
+                  ManageResultMessage(`💡 ${noteDot[2]}`);
+                }
+              }}
+            >
+              <Text style={{ color: hintUsed ? '#888' : (themeName === 'rocksmith' ? '#FFD900' : '#FF8C00'), fontWeight: 'bold', fontSize: 18 }}>💡</Text>
+            </Button>
             {campaignMode && (
               <View style={{ flexDirection: 'row' as const, alignItems: 'center' as const, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: themeName === 'rocksmith' ? '#232526' : '#E0C097', borderWidth: themeName === 'rocksmith' ? 0.5 : 1, borderColor: themeName === 'rocksmith' ? palette.primary : palette.fretboardBorder }}>
                 <Text style={{ color: themeName === 'rocksmith' ? palette.primary : '#543310', fontWeight: '900', fontSize: 14 }}>Lvl</Text>
@@ -814,9 +849,12 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     setCombo(newCombo);
                     await playSound(true);
                     ManageResultMessage("✅");
-                    setScore(score + 1);
+                    if (!hintUsed) {
+                      setScore(score + 1); // Only add score if hint wasn't used
+                    }
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
+                    setHintUsed(false); // Reset hint for next note
                     if (newCombo === 5 || newCombo === 10 || newCombo === 20) {
                       ManageResultMessage(`🔥 Streak x${newCombo}!`);
                       await playStreakCue(newCombo);
@@ -832,6 +870,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
                     setNumberOfPositions(numberOfPositions - 1);
                     setNoteDot(nextNoteDot);
                     setCombo(0);
+                    setHintUsed(false); // Reset hint on wrong answer
                     // Start timer for next note
                     startGuessTimer();
                   }
@@ -854,6 +893,7 @@ const GameScreen: React.FC<GameScreenProps> = ({
             difficulty={difficulty}
             themeName={themeName}
             palette={palette}
+            useColoredStrings={useColoredStrings}
           />
         </View>
       </View>

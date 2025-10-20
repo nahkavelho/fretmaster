@@ -13,6 +13,7 @@ interface FretboardProps {
   difficulty: number
   themeName: ThemeName
   palette: ThemePalette
+  useColoredStrings: boolean
 }
 
 interface DrawNoteDotProps {
@@ -23,7 +24,7 @@ interface DrawNoteDotProps {
 
 import { ThemeName, ThemePalette } from '../ThemeContext';
 
-const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty, themeName, palette }) => {
+const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, noteDot, difficulty, themeName, palette, useColoredStrings }) => {
 
   const max_difficulty = 12;
   const screenWidth = Dimensions.get('window').width;
@@ -34,13 +35,13 @@ const Fretboard: React.FC<FretboardProps> = ({ frets, strings, fretboardHeight, 
   const nutColor = palette.fretboardNut;
   return (
     <View style={{ position: 'relative', width: '100%', height: fretboardHeight, backgroundColor: bgColor, borderRadius: 16, borderWidth: 4, borderColor: borderColor }}>
-      {/* Strings (horizontal lines) */}
-      <Strings strings={strings} fretboardHeight={fretboardHeight} themeName={themeName} stringColors={palette.stringColors} palette={palette} />
-      {/* Dots */}
-      <FretDots frets={frets} fretboardHeight={fretboardHeight} />
-      {/* Frets (vertical lines) */}
+      {/* Frets (vertical lines) - render first so they're behind */}
       <Frets frets={frets} />
-      {/* Random note dots */}
+      {/* Dots (fretboard inlay dots) */}
+      <FretDots frets={frets} fretboardHeight={fretboardHeight} />
+      {/* Strings (horizontal lines) - render on top of frets */}
+      <Strings strings={strings} fretboardHeight={fretboardHeight} themeName={themeName} stringColors={palette.stringColors} palette={palette} useColoredStrings={useColoredStrings} />
+      {/* Random note dots - render last, on top of everything */}
       <DrawNoteDot noteDot={noteDot} themeName={themeName} palette={palette} />
     </View>
   )
@@ -87,7 +88,7 @@ const DrawNoteDot: React.FC<DrawNoteDotProps> = ({ noteDot, themeName, palette }
         width: 18, // Slightly larger for better visibility
         height: 18,
         borderRadius: 9,
-        backgroundColor: themeName === 'sunsetGlow' ? (noteDot[4] === 0 ? '#FF5252' : '#5D4037') : (noteDot[4] === 0 ? palette.noteDotOpen : palette.noteDotFretted),
+        backgroundColor: noteDot[4] === 0 ? palette.noteDotOpen : palette.noteDotFretted,
         borderWidth: 2,
         borderColor: noteDot[4] === 0 ? palette.noteDotOpenBorder : palette.noteDotFrettedBorder,
         zIndex: 10, // Ensure dot displays above strings

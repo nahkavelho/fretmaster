@@ -12,6 +12,8 @@ interface SettingsProps {
   setSoundEnabled: (value: boolean) => void;
   hapticsEnabled: boolean;
   setHapticsEnabled: (value: boolean) => void;
+  useColoredStrings: boolean;
+  setUseColoredStrings: (value: boolean) => void;
 }
 
 const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.create({
@@ -102,7 +104,7 @@ const styles = (palette: ThemePalette, themeName: ThemeName) => StyleSheet.creat
 });
 
 
-const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabled, hapticsEnabled, setHapticsEnabled }) => {
+const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabled, hapticsEnabled, setHapticsEnabled, useColoredStrings, setUseColoredStrings }) => {
   const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
   const { width } = useWindowDimensions();
   const isPortrait = width < 400;
@@ -151,6 +153,21 @@ const Settings: React.FC<SettingsProps> = ({ onBack, soundEnabled, setSoundEnabl
 
       </View>
       
+      {/* Colored Strings Toggle */}
+      <View style={s.settingRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.settingLabel}>Colored Strings</Text>
+          <Text style={s.settingDescription}>
+            Show themed colored strings instead of steel-like strings.
+          </Text>
+        </View>
+        <Switch
+          value={useColoredStrings}
+          onValueChange={setUseColoredStrings}
+          trackColor={{ false: palette.fretboardBorder, true: palette.primary }}
+          thumbColor={useColoredStrings ? palette.button : palette.modalBackground}
+        />
+      </View>
       
         <Button onPress={onBack} style={s.backButton}>
           <Text style={s.backButtonText}>Back to Menu</Text>

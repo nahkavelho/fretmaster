@@ -175,4 +175,19 @@ export const resetProgress = async (userId) => {
   }
 };
 
-export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore, getLevelScores, getUserStats, saveSessionStats, resetProgress are exported individually
+// Debug/Testing function to unlock all levels
+export const unlockAllLevels = async (userId) => {
+  if (!userId) return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    await setDoc(userProgressRef, {
+      highestLevelCompleted: 46,
+    }, { merge: true });
+    console.log("Unlocked all levels (1-46) for user:", userId);
+    return 46;
+  } catch (e) {
+    console.error("Error unlocking levels:", e);
+  }
+};
+
+export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore, getLevelScores, getUserStats, saveSessionStats, resetProgress, unlockAllLevels are exported individually

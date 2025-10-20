@@ -12,8 +12,11 @@ export function useScreenOrientation(currentScreen: string) {
           console.log('Locking to PORTRAIT for campaign mode');
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
         } else if (currentScreen === 'menu') {
-          console.log('Unlocking orientation for menu screen');
-          await ScreenOrientation.unlockAsync();
+          console.log('Locking to PORTRAIT_UP for menu screen');
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        } else if (currentScreen === 'reference') { 
+          console.log('Locking to LANDSCAPE_RIGHT for reference');
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
         } else if (currentScreen === 'settings' || currentScreen === 'profile') { 
           console.log('Locking to PORTRAIT_UP for settings/profile');
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);

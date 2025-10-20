@@ -13,6 +13,11 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
 
   React.useEffect(() => {
     if (!resultMessage) return;
+    // Stop any ongoing animation and reset to 0 to avoid overlap cutting the message short
+    try {
+      (feedbackAnimation as any).stopAnimation?.();
+    } catch {}
+    feedbackAnimation.setValue(0);
     const isQuick = (resultMessage === '✅' || resultMessage === '❌');
     if (isQuick) {
       Animated.sequence([
@@ -38,8 +43,8 @@ const AnimatedFeedback: React.FC<AnimatedFeedbackProps> = ({ resultMessage, feed
         }),
         Animated.timing(feedbackAnimation, {
           toValue: 0,
-          duration: 450,
-          delay: 1200,
+          duration: 500,
+          delay: 1500,
           useNativeDriver: true,
         }),
       ]).start();
