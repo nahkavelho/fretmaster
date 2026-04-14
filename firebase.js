@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
+import { initializeAuth, getReactNativePersistence, getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -190,4 +190,6 @@ export const unlockAllLevels = async (userId) => {
   }
 };
 
-export { auth, db }; // saveUserLevel, getUserLevel, saveLevelScore, getLevelScores, getUserStats, saveSessionStats, resetProgress, unlockAllLevels are exported individually
+const googleProvider = new GoogleAuthProvider();
+
+export { auth, db, googleProvider }; // saveUserLevel, getUserLevel, saveLevelScore, getLevelScores, getUserStats, saveSessionStats, resetProgress, unlockAllLevels are exported individually
