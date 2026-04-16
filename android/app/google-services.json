@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "650240327074-53a3lmt4aptq1bk95cm0lolr4om3nghb.apps.googleusercontent.com",
+          "client_id": "650240327074-dl3uaehp4j08r3fqshkvmbmsvanjci3e.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.pekerage.fretboarder",
-            "certificate_hash": "be0ad9c6de3ebf1c89485c8799430c612c34788f"
+            "certificate_hash": "e7fc909f2da66b82ec3b0686d99770bac5cb9880"
           }
         },
         {
