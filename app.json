@@ -26,6 +26,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.pekerage.fretboarder",
+      "googleServicesFile": "./google-services.json",
       "permissions": [],
       "softwareKeyboardLayoutMode": "pan",
       "statusBar": {

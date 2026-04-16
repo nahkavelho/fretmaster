@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "650240327074",
+    "project_id": "fretboarder-1871e",
+    "storage_bucket": "fretboarder-1871e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650240327074:android:f820daf4e4e4de7c97c6fb",
+        "android_client_info": {
+          "package_name": "com.pekerage.fretboarder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "650240327074-dl3uaehp4j08r3fqshkvmbmsvanjci3e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pekerage.fretboarder",
+            "certificate_hash": "e7fc909f2da66b82ec3b0686d99770bac5cb9880"
+          }
+        },
+        {
+          "client_id": "650240327074-17n9muoct6b54bg9d3pdoe13u9t0hnfc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq7iqqVMBlwDwtX1lcedqJHKVbTv30pKM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "650240327074-17n9muoct6b54bg9d3pdoe13u9t0hnfc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

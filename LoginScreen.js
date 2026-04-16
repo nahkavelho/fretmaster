@@ -5,7 +5,7 @@ import { auth, googleProvider } from "./firebase";
 import { ThemeContext } from "./app/ThemeContext";
 
 // Google OAuth Client ID from Google Cloud Console
-const GOOGLE_WEB_CLIENT_ID = "1091722031396-443inu1a3tipkjhnhcl8isbip37n9fh.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID = "650240327074-17n9muoct6b54bg9d3pdoe13u9t0hnfc.apps.googleusercontent.com";
 
 // Native Google Sign-In (only imported on native platforms)
 let GoogleSignin = null;
