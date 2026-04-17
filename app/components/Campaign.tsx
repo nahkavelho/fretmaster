@@ -2,6 +2,10 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import Button from "../../components/ui/button";
 import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import Paywall from "./Paywall";
+
+// Free tier: Low E String (levels 1-7). All other strings require Pro.
+export const FREE_LEVEL_MAX = 7;
 
 interface CampaignProps {
   score: number;
@@ -9,6 +13,9 @@ interface CampaignProps {
   onLevelSelect: (level: number) => void
   unlockedLevel: number
   bestScores: Record<string, number>
+  isPro: boolean
+  userId: string | null | undefined
+  onProUnlocked: () => void
 }
 
 const LEVEL_COUNT = 46;
@@ -213,10 +220,11 @@ const getStyles = (themeName: ThemeName, palette: ThemePalette) => StyleSheet.cr
 
 import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Added ThemeName and ThemePalette
 
-const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score, bestScores }) => {
+const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score, bestScores, isPro, userId, onProUnlocked }) => {
 
   const { themeName, palette } = React.useContext(ThemeContext);
   const styles = getStyles(themeName, palette); // Call getStyles
+  const [paywallOpen, setPaywallOpen] = React.useState(false);
   // Smooth gradient color scheme across all levels (theme-aware)
   const getLevelColor = React.useCallback((level: number) => {
     // Acoustic theme: Vibrant warm tones (wood, bronze, amber, copper, terracotta)
@@ -252,7 +260,9 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
       <Text style={styles.title}>Campaign</Text>
       <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ justifyContent: 'flex-start', alignItems: 'center', paddingTop: 32, paddingBottom: 32 }}>
         {QUESTS.map((quest) => {
-          const locked = quest.id > unlockedLevel;
+          const proLocked = quest.id > FREE_LEVEL_MAX && !isPro;
+          const progressionLocked = quest.id > unlockedLevel;
+          const locked = proLocked || progressionLocked;
           const levelColor = getLevelColor(quest.id);
           const headerLabel = quest.id === 1 ? 'Low E String' : quest.id === 8 ? 'A String' : quest.id === 15 ? 'E + A Combined' : quest.id === 16 ? 'D String' : quest.id === 23 ? 'G String' : quest.id === 30 ? 'D + G Combined' : quest.id === 31 ? 'B String' : quest.id === 38 ? 'High E String' : quest.id === 45 ? 'B + High E Combined' : quest.id === 46 ? 'Master Level' : null;
           return (
@@ -265,13 +275,17 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
                   </View>
                 </View>
               )}
-              <View style={[styles.questRow, locked ? { opacity: 0.6 } : null]}>
+              <View style={[styles.questRow, locked ? { opacity: proLocked ? 0.85 : 0.6 } : null]}>
                 <Pressable
-                  disabled={locked}
-                  onPress={() => { onLevelSelect(quest.id); }}
+                  disabled={progressionLocked && !proLocked}
+                  onPress={() => {
+                    if (proLocked) { setPaywallOpen(true); return; }
+                    if (!locked) onLevelSelect(quest.id);
+                  }}
                   android_ripple={{ color: '#00000022', borderless: false }}
                   style={({ pressed }) => [
                     styles.levelCard,
+                    proLocked && { borderColor: palette.primary, borderWidth: 1.5 },
                     pressed && { transform: [{ scale: 0.98 }], opacity: 0.96 }
                   ]}
                 >
@@ -289,7 +303,7 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
                         {quest.description}
                       </Text>
                       <Text style={styles.metaText}>
-                        {typeof bestScores[String(quest.id)] === 'number' ? `Best: ${bestScores[String(quest.id)]}/30` : locked ? 'Locked' : 'No score yet'}
+                        {typeof bestScores[String(quest.id)] === 'number' ? `Best: ${bestScores[String(quest.id)]}/30` : proLocked ? 'Pro — tap to unlock' : progressionLocked ? 'Locked' : 'No score yet'}
                       </Text>
                       {/* Progress bar */}
                       {typeof bestScores[String(quest.id)] === 'number' && (
@@ -298,7 +312,12 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
                         </View>
                       )}
                     </View>
-                    {locked ? (
+                    {proLocked ? (
+                      <View style={[styles.lockWrap, { backgroundColor: palette.primary, borderColor: palette.primary }]}>
+                        <MaterialCommunityIcons name="crown" size={16} color={themeName === 'rocksmith' ? '#232526' : '#F8F4E1'} />
+                        <Text style={{ color: themeName === 'rocksmith' ? '#232526' : '#F8F4E1', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>PRO</Text>
+                      </View>
+                    ) : progressionLocked ? (
                       <View style={styles.lockWrap}>
                         <FontAwesome5 name="lock" size={14} color={palette.textSecondary} />
                       </View>
@@ -319,6 +338,12 @@ const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLeve
       <Button onPress={onBack} style={styles.backButton} >
         <Text style={styles.backButtonText}>Back to Menu</Text>
       </Button>
+      <Paywall
+        visible={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        onPurchaseSuccess={() => { onProUnlocked(); }}
+        userId={userId}
+      />
     </View>
   );
 };

@@ -175,6 +175,37 @@ export const resetProgress = async (userId) => {
   }
 };
 
+// Paywall / Pro status helpers
+export const getIsPro = async (userId) => {
+  if (!userId) return false;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    const docSnap = await getDoc(userProgressRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() || {};
+      return data.isPro === true;
+    }
+    return false;
+  } catch (e) {
+    console.error("Error getting pro status:", e);
+    return false;
+  }
+};
+
+export const setIsPro = async (userId, isPro) => {
+  if (!userId) return;
+  try {
+    const userProgressRef = doc(db, "userProgress", userId);
+    await setDoc(userProgressRef, {
+      isPro: !!isPro,
+      proSince: isPro ? Date.now() : null,
+    }, { merge: true });
+    console.log("Pro status updated:", userId, isPro);
+  } catch (e) {
+    console.error("Error setting pro status:", e);
+  }
+};
+
 // Debug/Testing function to unlock all levels
 export const unlockAllLevels = async (userId) => {
   if (!userId) return;

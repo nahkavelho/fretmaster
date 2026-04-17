@@ -11,7 +11,7 @@ import GenDotList, { ManualDotPosition as ManualDotPositionFunction } from "./co
 import { NoteDot, Note } from "./components/DotPositions";
 import LoginScreen from '../LoginScreen';
 import { getAuth, onAuthStateChanged, User as FirebaseUser, signOut, Auth } from 'firebase/auth'; // Added FirebaseUser for clarity
-import { auth, getUserLevel, saveUserLevel, getLevelScores, getUserStats, resetProgress } from "../firebase"; // Add stats and reset APIs
+import { auth, getUserLevel, saveUserLevel, getLevelScores, getUserStats, resetProgress, getIsPro } from "../firebase"; // Add stats and reset APIs
 import Settings from "./components/Settings";
 import { ThemeContext, ThemeName, ThemePalette } from './ThemeContext';
 import { UI_SIZES } from './components/uiConstants';
@@ -45,6 +45,7 @@ export function FretboarderAppScreen() {
   const [unlockedLevel, setUnlockedLevel] = React.useState(1); // TODO: Load from storage
   const [score, setScore] = React.useState(0); // TODO: Load from storage
   const [bestScores, setBestScores] = React.useState<Record<string, number>>({});
+  const [isPro, setIsProState] = React.useState<boolean>(false);
   const [resultMessage, setResultMessage] = React.useState<string | null>(null);
   const [feedbackAnimation] = React.useState(new Animated.Value(0));
   const [noteQueue, setNoteQueue] = React.useState<NoteDot[]>([]);
@@ -94,6 +95,13 @@ export function FretboarderAppScreen() {
           setUserStats(stats || { totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] });
         } catch (e) {
           setUserStats({ totalTimeSeconds: 0, bestStreak: 0, recentSessions: [] });
+        }
+        // Load pro status
+        try {
+          const pro = await getIsPro(firebaseUser.uid);
+          setIsProState(!!pro);
+        } catch (e) {
+          setIsProState(false);
         }
       } else {
         // User is logged out, reset level states if necessary
@@ -268,6 +276,9 @@ const NOTE_NAMES = (
         unlockedLevel={unlockedLevel}
         score={score}
         bestScores={bestScores}
+        isPro={isPro}
+        userId={user?.uid}
+        onProUnlocked={() => setIsProState(true)}
       />
     );
   }
