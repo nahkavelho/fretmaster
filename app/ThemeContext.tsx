@@ -122,13 +122,13 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [themeName, setThemeName] = React.useState<ThemeName>('rocksmith');
   const palette = THEME_PALETTES[themeName];
 
-  // Potentially load saved theme preference here
-  // React.useEffect(() => {
-  //   // Load theme from AsyncStorage or other storage
-  // }, []);
+  const value = React.useMemo(
+    () => ({ themeName, setThemeName, palette }),
+    [themeName, palette]
+  );
 
   return (
-    <ThemeContext.Provider value={{ themeName, setThemeName, palette }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

@@ -25,17 +25,18 @@ import FretboardReference from './components/FretboardReference';
 
 const frets = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 const strings = [1, 2, 3, 4, 5, 6]
+const ALL_CHROMATIC_NOTES_ORDERED = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+
 // Force light mode for the app
 
 
 
 export function FretboarderAppScreen() {
-  const ALL_CHROMATIC_NOTES_ORDERED = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
   const { themeName, setThemeName, palette } = React.useContext(ThemeContext);
 
 
 
-  const styles = getGlobalStyles(themeName, palette);
+  const styles = React.useMemo(() => getGlobalStyles(themeName, palette), [themeName, palette]);
   const [currentScreen, setScreen] = React.useState('menu'); // 'menu', 'free', 'campaign', 'settings', 'profile'
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [user, setUser] = React.useState<FirebaseUser | null>(null);
@@ -233,31 +234,19 @@ export function FretboarderAppScreen() {
     }
   }
 
-const NOTE_NAMES = (
-  () => {
-    const arr = GenDotList(
-      fretboardHeight,
-      strings.length,
-      difficulty,
-      undefined,
-      undefined,
-      verticalOffset,
-      fullList
-    )
-      .map((note: Note) => note[2])
-      .filter((value : string, index : number, self : string[]) => self.indexOf(value) === index)
-
-    return arr
-  }
-)()
-  // This useEffect for Firebase auth is being replaced by the one consolidated above.
-  // React.useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth as Auth, as Auth, (currentUser) => {
-  //     setLoggedIn(!!currentUser)
-  //     setAuthChecked(true);
-  //   })
-  //   return unsubscribe
-  // }, [])
+const NOTE_NAMES = React.useMemo(() => {
+  return GenDotList(
+    fretboardHeight,
+    strings.length,
+    difficulty,
+    undefined,
+    undefined,
+    verticalOffset,
+    fullList
+  )
+    .map((note: Note) => note[2])
+    .filter((value: string, index: number, self: string[]) => self.indexOf(value) === index)
+}, [fretboardHeight, difficulty, verticalOffset, fullList])
 
   if (!authChecked) {
     // Optionally show a loading spinner here

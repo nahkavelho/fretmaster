@@ -223,7 +223,7 @@ import { ThemeContext, ThemeName, ThemePalette } from '../ThemeContext'; // Adde
 const Campaign: React.FC<CampaignProps> = ({ onBack, onLevelSelect, unlockedLevel, score, bestScores, isPro, userId, onProUnlocked }) => {
 
   const { themeName, palette } = React.useContext(ThemeContext);
-  const styles = getStyles(themeName, palette); // Call getStyles
+  const styles = React.useMemo(() => getStyles(themeName, palette), [themeName, palette]);
   const [paywallOpen, setPaywallOpen] = React.useState(false);
   // Smooth gradient color scheme across all levels (theme-aware)
   const getLevelColor = React.useCallback((level: number) => {
